@@ -1,7 +1,7 @@
-import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Getter
 public enum MaterialType {
     ATOMIC_OBJECT("task"),
