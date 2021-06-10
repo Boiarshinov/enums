@@ -22,6 +22,12 @@ public enum ErrorCode {
 
     private final String value;
 
+    public static final EnumSet<ErrorCode> RECOVERABLE_ERRORS = EnumSet.of(
+        MISSING_INPUT_RESPONSE,
+        INVALID_INPUT_RESPONSE,
+        TIMEOUT_OR_DUPLICATE
+    );
+
     private static final Map<String, ErrorCode> VALUE_TO_ENUM = EnumSet.allOf(ErrorCode.class).stream()
         .collect(Collectors.toMap(ErrorCode::getValue, Function.identity()));
 

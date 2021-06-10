@@ -1,17 +1,87 @@
 # Мастерское использование перечислений
 
+<mark>todo введение</mark>
+
 Содержание:
-- [X] Получение перечисления по параметру
-- [ ] Не использовать одно и то же перечисление на разных слоях приложения  
+- [ ] Перечисления в публичном API
+- [ ] Перечисления в БД
+- [ ] Разделение слоев
+- [X] Получение перечисления по значению
 - [ ] Перечисление как Singleton
 - [ ] Внутреннее перечисление как способ организации бизнес-логики
 - [ ] Использование перечислений в тестах
     * [ ] Не генерировать их рандомно
     * [ ] Как тестировать по нескольким значениям перечислений
 
+## Перечисления в публичном API
+<mark>todo</mark>
+
+### JSON
+К сожалению, в синтаксисе JSON нет возможности выделить перечисления, и в большинстве случаев приходится передавать значение enum в виде строки.
+Но это не повод не использовать перечисления в Java коде.
+Если вы используете Jackson для сериализации в JSON, то он прекрасно справляется с преобразованием перечислений в строки.
+```java
+// DayOfWeek - стандартное перечисление из пакета java.time
+assertEquals("\"MONDAY\"", objectMapper.writeValueAsString(DayOfWeek.MONDAY));
+```
+
+Все клиенты вашего API будут бесконечно благодарны, если в документации на API вы опишете все возможные значения перечисляемого поля. 
+Многие openApi генераторы (я использую [springdoc][springdoc-github]), преобразующие DTO в openApi схему, умеют работать с перечислениями. 
+Например, вот такой DTO
+```java
+public class Lesson {
+
+    private String discipline;
+    private DayOfWeek dayOfWeek; //Стандартное перечисление из java.time
+    private int order;
+    private String cabinet;
+}
+```
+
+будет автоматически преобразован в 
+```yaml
+Lesson:
+  type: object
+  properties:
+    discipline:
+      type: string
+    dayOfWeek:
+      type: string
+      enum:
+      - MONDAY
+      - TUESDAY
+      - WEDNESDAY
+      - THURSDAY
+      - FRIDAY
+      - SATURDAY
+      - SUNDAY
+    order:
+      type: integer
+      format: int32
+    cabinet:
+      type: string
+```
+<mark>todo</mark>
+
+#### Почему ваш JSON на меня орет?
+
 <mark>А как работает @JsonValue?</mark>
 
+### XML
+<mark>todo</mark>
+
+### Protobuf и Avro
+<mark>todo</mark>
+
+## Перечисления в БД
+<mark>todo</mark>
+
+## Разделение слоев
+<mark>todo</mark>
+
 ## Получение перечисления по параметру
+
+<mark>Переписать с учетом предыдущих глав</mark>
 
 Перечисления - замечательная вещь. 
 Они позволяют описать набор констант (дни недели, месяца).
@@ -105,8 +175,16 @@ public boolean isValid(String value, ConstraintValidatorContext context) {
 }
 ```
 
+## Перечисление как Singleton
+<mark>todo</mark>
 
+## Внутреннее перечисление как способ организации бизнес-логики
+<mark>todo</mark>
 
+## Использование перечислений в тестах
+<mark>todo</mark>
+
+[springdoc-github]: https://github.com/springdoc/springdoc-openapi
 [so_enums_in_db]: https://stackoverflow.com/questions/2318123/postgresql-enum-what-are-the-advantages-and-disadvantages/2322214
 [so_enum_by_value_1]: https://stackoverflow.com/questions/4886973/the-proper-way-to-look-up-an-enum-by-value
 [so_enum_by_value_2]: https://stackoverflow.com/questions/55591953/java-enum-with-constructor-best-way-to-get-value-by-constructor-argument
