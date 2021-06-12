@@ -1,10 +1,7 @@
 package dev.boiarshinov.enumsindb.db;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.Entity;
@@ -16,12 +13,10 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Getter @Setter
+@EqualsAndHashCode
 @Entity
 @Table(name = "school")
 public class School {
-
-    public School() {
-    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

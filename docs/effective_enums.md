@@ -5,8 +5,9 @@
 Содержание:
 - [ ] Перечисления в публичном API
 - [ ] Перечисления в БД
-- [ ] Разделение слоев
 - [X] Получение перечисления по значению
+- [ ] Разделение слоев
+- [ ] Коллекции с перечислениями
 - [ ] Перечисление как Singleton
 - [ ] Внутреннее перечисление как способ организации бизнес-логики
 - [ ] Использование перечислений в тестах
@@ -65,7 +66,28 @@ Lesson:
 
 #### Почему ваш JSON на меня орет?
 
-<mark>А как работает @JsonValue?</mark>
+При интеграции с каким-либо сервисом перечисления в его API могут быть заданы с помощью магических чисел или непривычным для Java кодстайла способом.
+Например, в [API Яндекс.Маркета][yandex-api] статусы задаются в числовом виде, а в [API Google ReCaptcha][recaptcha-api] коды ошибок задаются в кебаб-кейсе. 
+В своем коде же мы хотели бы видеть эти значения в виде перечислений.
+
+Для перевода значения в перечисление можно было бы написать конвертер, но Jackson предоставляет более удобный способ.
+Достаточно поставить над полем в вашем перечислении аннотацию `@JsonValue`.
+```java
+public enum ErrorCode {
+    MISSING_INPUT_SECRET("missing-input-secret"),
+    INVALID_INPUT_SECRET("invalid-input-secret"),
+    MISSING_INPUT_RESPONSE("missing-input-response"),
+    INVALID_INPUT_RESPONSE("invalid-input-response"),
+    BAD_REQUEST("bad-request"),
+    TIMEOUT_OR_DUPLICATE("timeout-or-duplicate"),
+    INVALID_KEYS("invalid-keys"); //Не описанный в документации, но существующий код ошибки
+
+    @JsonValue
+    private final String value;
+}
+```
+Теперь при парсинге JSON Jackson будет автоматически переводить строковое значение в перечисление.
+То же работает и в обратную сторону: при сериализации такого перечисления в JSON он будет приведен к значению, помеченному `@JsonValue`.
 
 ### XML
 <mark>todo</mark>
@@ -181,10 +203,48 @@ public boolean isValid(String value, ConstraintValidatorContext context) {
 ## Внутреннее перечисление как способ организации бизнес-логики
 <mark>todo</mark>
 
-## Использование перечислений в тестах
-<mark>todo</mark>
+## Использование перечислений в юнит-тестах
+В первую очередь, не стоит генерировать перечисление для тестовой DTO рандомно.
+Зачастую перечисления используются для разветвлений в бизнес-логике, поэтому при изменении этой самой бизнес-логики некоторые тесты могут начать рандомно падать.
+В результате можно получить ситуацию, когда локально тесты прошли, в CI они тоже прошли, а после мержа в master ветку CI падает, потому что зарандомилось неподходящее перечисление.
+
+Лучше при создании DTO в тестах хардкодить значение перечислений. 
+А в некоторых случаях стоит даже проходиться по всем доступным значениям перечисления.
+
+В JUnit для прогонки параметрического теста по значениям перечисления существует аннотация `@EnumSource`.
+```java
+@ParameterizedTest
+@EnumSource
+void test(DayOfWeek dayOfWeek) { /* ... */ }
+```
+По аргументу тестового метода аннотация сама поймет тип перечисления и тест будет проведен для всех его значений.
+
+К сожалению, этой аннотацией становится неудобно пользоваться, когда необходимо исключить какие-то значения перечисления из теста.
+Неудобство заключается в том, что конкретные значения перечисления передаются в виде строк, что может грозить ошибками при рефакторинге.
+```java
+@ParameterizedTest
+@EnumSource(mode = EnumSource.Mode.EXCLUDE, names = {"SUNDAY"})
+void test(DayOfWeek dayOfWeek) { /* ... */ }
+```
+
+Для того чтобы избежать ошибок при рефакторинге лучше пользоваться аннотацией `@MethodSource`, а необходимые значения перечисления описывать с помощью `EnumSet`.
+```java
+private static Stream<Arguments> dayOfWeekProvider() {
+    EnumSet<DayOfWeek> exclusionSet = EnumSet.of(DayOfWeek.SUNDAY);
+    return EnumSet.complementOf(exclusionSet).stream()
+        .map(Arguments::of);
+}
+        
+@ParameterizedTest
+@MethodSource("dayOfWeekProvider")
+void test(DayOfWeek dayOfWeek) { /* ... */ }
+```
+
+Примечание - рекомендация 'не генерировать значения для тестов рандомно' применима не только к перечислениям, но и к полям любых других типов.
 
 [springdoc-github]: https://github.com/springdoc/springdoc-openapi
+[yandex-api]: https://yandex.ru/dev/market/partner/doc/dg/reference/get-campaigns.html
+[recaptcha-api]: https://developers.google.com/recaptcha/docs/verify#error_code_reference
 [so_enums_in_db]: https://stackoverflow.com/questions/2318123/postgresql-enum-what-are-the-advantages-and-disadvantages/2322214
 [so_enum_by_value_1]: https://stackoverflow.com/questions/4886973/the-proper-way-to-look-up-an-enum-by-value
 [so_enum_by_value_2]: https://stackoverflow.com/questions/55591953/java-enum-with-constructor-best-way-to-get-value-by-constructor-argument
