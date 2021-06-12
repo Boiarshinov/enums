@@ -15,11 +15,13 @@
 - [ ] сделать UML-диаграмму EnumSet 
 - [ ] enum как singleton
 - [x] как парсить перечисления из чего-либо
-- [ ] не генерировать перечисления рандомно в тестах 
+- [x] не генерировать перечисления рандомно в тестах 
 
 ## Разные статейки про перечисления
 - Статья со странным слогом про некоторые фишки enum: https://habr.com/ru/post/321152/
 - Подход к использованию enum'ов в качестве стратегии (не работает для DI-контейнеров): https://habr.com/ru/post/101280/
+- 8 недостатков колонки типа enum в MySQL (2011 г.): http://komlenic.com/244/8-reasons-why-mysqls-enum-data-type-is-evil/
+- Преимущество enum колонок в PostgreSQL (2018 г.): https://habr.com/ru/post/353556/
 
 [enums]: /docs/enums.md
 [enum-set]: /src/test/java/EnumSetTest.java
