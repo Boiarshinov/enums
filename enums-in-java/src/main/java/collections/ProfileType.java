@@ -1,9 +1,11 @@
+package collections;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 @Getter
-public enum  ProfileType {
+public enum ProfileType {
     GUEST("guest"),
     USER("user"),
     MODERATOR("moder"),
