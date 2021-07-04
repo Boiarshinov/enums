@@ -22,6 +22,7 @@
 - Подход к использованию enum'ов в качестве стратегии (не работает для DI-контейнеров): https://habr.com/ru/post/101280/
 - 8 недостатков колонки типа enum в MySQL (2011 г.): http://komlenic.com/244/8-reasons-why-mysqls-enum-data-type-is-evil/
 - Преимущество enum колонок в PostgreSQL (2018 г.): https://habr.com/ru/post/353556/
+- Про недостатки enum'ов (2019 г.): https://habr.com/ru/post/476650/
 
 [enums]: /docs/enums.md
-[enum-set]: /src/test/java/EnumSetTest.java
+[enum-set]: /enums-in-java/src/test/java/collections/collections.EnumSetTest.java
