@@ -1,11 +1,15 @@
 # Effective enums
 
-<mark>todo введение</mark>
+<mark>todo введение. Тут нужно объявить в какой предметной области будут приведены примеры</mark>
 
 Содержание:
-- [ ] Перечисления в публичном API
+- [X] Перечисления в публичном API
+  - [X] JSON
+  - [ ] XML
+  - [ ] Бинарные форматы  
 - [ ] Перечисления в БД
 - [X] Получение перечисления по значению
+  - [ ] Сравнение перфоманса
 - [ ] Разделение слоев
 - [ ] Коллекции с перечислениями
 - [ ] Перечисление как Singleton
@@ -13,10 +17,98 @@
 - [X] Использование перечислений в тестах
 
 ## Перечисления в публичном API
-<mark>todo</mark>
+По поводу использования перечислений в публичном API сломано немало копий.
+Например, на последнем JPoint был [доклад][enums-in-api-jpoint], осуждающий использование перечислений в API.
+
+При рассмотрении использования перечислений в публичном API нужно разделять получение и отдачу перечислений.
+Отдавать перечисления - хорошо. 
+Клиенты вашего API будут рады, что часть полей может принимать только ограниченное количество значений.
+Это позволяет клиентам заложить различную логику обработки приходящих значений.
+Коды состояния http и MIME-типы тоже являются примерами перечислений в API.
+
+Принимать перечисления - тоже хорошо (но уже не так хорошо).
+Когда вы выступаете в качестве клиента чужого API или принимаете значения от пользователя, нужно провести анализ каким образом обрабатывать входящие значения.
+То, что поле имеет строго определенный перечень возможных значений, еще не значит, что вы обязательно должны использовать перечисление.
+Я считаю, что если логика вашего приложения не разветвляется в зависимости от значения перечисления, то вполне можно использовать для передачи и хранения поля обычные строки.
+В любом ином случае лучше использовать перечисления, при этом всегда стоит перестраховаться на получение неожиданных значений.
+
+Рассмотрим в качестве примера интеграцию с Google ReCaptcha.
+В официальной документации написано, что API может возвращать список ошибок, часть из которых является восстанавливаемыми, а часть нет.
+Список возможных ошибок приведен на картинке:
+
+![recaptcha-errors](img/recaptcha_errors.png)
+
+Логика обработки ответа будет зависеть от конкретного типа ошибки, поэтому мы используем перечисление:
+```java
+@RequiredArgsConstructor
+public enum ErrorCode {
+    MISSING_INPUT_SECRET("missing-input-secret"),
+    INVALID_INPUT_SECRET("invalid-input-secret"),
+    MISSING_INPUT_RESPONSE("missing-input-response"),
+    INVALID_INPUT_RESPONSE("invalid-input-response"),
+    BAD_REQUEST("bad-request"),
+    TIMEOUT_OR_DUPLICATE("timeout-or-duplicate");
+
+    private final String value; //Логика получения перечисления из строки опущена
+
+    public static final EnumSet<ErrorCode> RECOVERABLE_ERRORS = EnumSet.of(
+            MISSING_INPUT_RESPONSE,
+            INVALID_INPUT_RESPONSE,
+            TIMEOUT_OR_DUPLICATE
+    );
+}
+```
+Для того чтобы заложить логику обработки ошибок, мы даже создали множество восстанавливаемых ошибок.
+
+Но вот беда, когда мы начали тестировать интеграцию с сервисом Google ReCaptcha, оказалось, что у него есть незадокументированное поведение.
+В ряде случаев их API возвращает в коде ошибки значение `invalid-keys`.
+Худшее, что можно сделать в этой ситуации - ограничиться добавлением нового значения `INVALID_KEYS` в перечисление.
+```java
+@RequiredArgsConstructor
+public enum ErrorCode {
+    MISSING_INPUT_SECRET("missing-input-secret"),
+    INVALID_INPUT_SECRET("invalid-input-secret"),
+    MISSING_INPUT_RESPONSE("missing-input-response"),
+    INVALID_INPUT_RESPONSE("invalid-input-response"),
+    BAD_REQUEST("bad-request"),
+    TIMEOUT_OR_DUPLICATE("timeout-or-duplicate"),
+    INVALID_KEYS("invalid-keys");
+
+    private final String value; //Логика получения перечисления из строки опущена
+    /* ... */
+}
+```
+
+Возможно это не единственное незадокументированное значение, а другие просто не были обнаружены при тестировании.
+
+Что же делать?
+На мой взгляд, лучшее решение - создать отдельное перечисление для всех незадокументированных значений.
+При парсинге входящей строки любое незнакомое значение будет преобразовано в специальное перечисление.
+Обработка этого перечисления будет реализована в сервисе, ответственном за обработку ответа от внешнего сервиса.
+```java
+@RequiredArgsConstructor
+public enum ErrorCode {
+    MISSING_INPUT_SECRET("missing-input-secret"),
+    INVALID_INPUT_SECRET("invalid-input-secret"),
+    MISSING_INPUT_RESPONSE("missing-input-response"),
+    INVALID_INPUT_RESPONSE("invalid-input-response"),
+    BAD_REQUEST("bad-request"),
+    TIMEOUT_OR_DUPLICATE("timeout-or-duplicate"),
+    INVALID_KEYS("invalid-keys"),
+    UNEXPECTED("unexpected");
+
+    private final String value; //Логика получения перечисления из строки опущена
+    /* ... */
+}
+```
+
+Сейчас я умышленно не показываю каким образом происходит преобразование строки в перечисление. 
+Этому посвящен отдельный раздел чуть ниже.
+
+А теперь рассмотрим какие существуют инструменты для преобразования перечислений в различные форматы представления данных и обратно.
 
 ### JSON
-К сожалению, в синтаксисе JSON нет возможности выделить перечисления, и в большинстве случаев приходится передавать значение enum в виде строки.
+К сожалению, в синтаксисе JSON нет возможности выделить перечисления, поэтому приходится передавать значение enum в виде строки или целого числа.
 Но это не повод не использовать перечисления в Java коде.
 Если вы используете Jackson для сериализации в JSON, то он прекрасно справляется с преобразованием перечислений в строки.
 ```java
@@ -71,21 +163,31 @@ Lesson:
 Для перевода значения в перечисление можно было бы написать конвертер, но Jackson предоставляет более удобный способ.
 Достаточно поставить над полем в вашем перечислении аннотацию `@JsonValue`.
 ```java
-public enum ErrorCode {
-    MISSING_INPUT_SECRET("missing-input-secret"),
-    INVALID_INPUT_SECRET("invalid-input-secret"),
-    MISSING_INPUT_RESPONSE("missing-input-response"),
-    INVALID_INPUT_RESPONSE("invalid-input-response"),
-    BAD_REQUEST("bad-request"),
-    TIMEOUT_OR_DUPLICATE("timeout-or-duplicate"),
-    INVALID_KEYS("invalid-keys"); //Не описанный в документации, но существующий код ошибки
-
-    @JsonValue
-    private final String value;
+@Getter
+@RequiredArgsConstructor
+public enum Grade {
+  EXCELLENT('A'),
+  SATISFACTORY('B'),
+  MEDIOCRE('C'),
+  INSUFFICIENT('D'),
+  FAILURE('F');
+    
+  @JsonValue
+  private final char mark;
 }
 ```
-Теперь при парсинге JSON Jackson будет автоматически переводить строковое значение в перечисление.
-То же работает и в обратную сторону: при сериализации такого перечисления в JSON он будет приведен к значению, помеченному `@JsonValue`.
+Теперь при сериализации такого перечисления в JSON он будет приведен к значению, помеченному `@JsonValue`.
+То же работает и в обратную сторону: при парсинге JSON Jackson будет автоматически переводить строковое значение в перечисление.
+
+Ранее мы разобрали, что при получении данных из внешних источников в большинстве случаев стоит закладывать отдельное перечисление для незадокументированных значений.
+Поэтому при получении данных для парсинга лучше использовать не `@JsonValue`, а статический метод генерации, помеченный аннотацией `@JsonCreator`:
+```java
+@JsonCreator
+public static ErrorCode parse(String value) {
+    return Optional.ofNullable(VALUE_TO_ENUM_MAP.get(value))
+        .orElse(ErrorCode.UNEXPECTED);
+}
+```
 
 ### XML
 <mark>todo</mark>
@@ -132,7 +234,8 @@ public enum ErrorCode {
     INVALID_INPUT_RESPONSE("invalid-input-response"),
     BAD_REQUEST("bad-request"),
     TIMEOUT_OR_DUPLICATE("timeout-or-duplicate"),
-    INVALID_KEYS("invalid-keys"); //Не описанный в документации, но существующий код ошибки
+    INVALID_KEYS("invalid-keys"),
+    UNEXPECTED("unexpected");
     
     private final String value;
 }
@@ -163,11 +266,11 @@ public enum ResponseCode {
 И тут возникает вопрос: а как правильно получить перечисление по значению?
 Зачастую можно встретить подобный код:
 ```java
-public static ErrorCode fromCount(String value) {
-    return Arrays.stream(ErrorCode.values())
+public static ErrorCode from(String value) {
+  return Arrays.stream(ErrorCode.values())
     .filter(it -> it.getValue().equals(value))
     .findFirst()
-    .orElseThrow(() -> new IllegalArgumentException(String.format("Have no code for value '%s'", value)));
+    .orElse(ErrorCode.UNEXPECTED);
 }
 ```
 
@@ -180,9 +283,9 @@ public static ErrorCode fromCount(String value) {
 private static final Map<String, ErrorCode> VALUE_TO_ENUM = EnumSet.allOf(ErrorCode.class).stream()
     .collect(Collectors.toMap(ErrorCode::getValue, Function.identity()));
 
-public static ErrorCode byCount(String value) {
+public static ErrorCode parse(String value) {
     return Optional.ofNullable(VALUE_TO_ENUM.get(value))
-        .orElseThrow(() -> new IllegalArgumentException(String.format("Have no code for value '%s'", value)));
+        .orElse(ErrorCode.UNEXPECTED);
 }
 ```
 
@@ -252,6 +355,7 @@ void test(DayOfWeek dayOfWeek) { /* ... */ }
 
 Примечание - рекомендация 'не генерировать значения для тестов рандомно' применима не только к перечислениям, но и к полям любых других типов.
 
+[enums-in-api-jpoint]: https://jpoint.ru/2021/talks/5mcrhi5tcv6kmbccdnfpte/
 [springdoc-github]: https://github.com/springdoc/springdoc-openapi
 [yandex-api]: https://yandex.ru/dev/market/partner/doc/dg/reference/get-campaigns.html
 [recaptcha-api]: https://developers.google.com/recaptcha/docs/verify#error_code_reference

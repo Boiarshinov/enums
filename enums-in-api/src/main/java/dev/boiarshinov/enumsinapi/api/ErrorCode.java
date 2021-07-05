@@ -1,3 +1,6 @@
+package dev.boiarshinov.enumsinapi.api;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -18,7 +21,8 @@ public enum ErrorCode {
     INVALID_INPUT_RESPONSE("invalid-input-response"),
     BAD_REQUEST("bad-request"),
     TIMEOUT_OR_DUPLICATE("timeout-or-duplicate"),
-    INVALID_KEYS("invalid-keys"); //Не описанный в документации, но существующий код ошибки
+    INVALID_KEYS("invalid-keys"), //Не описанный в документации, но существующий код ошибки
+    UNEXPECTED("unexpected");
 
     private final String value;
 
@@ -32,17 +36,18 @@ public enum ErrorCode {
         .collect(Collectors.toMap(ErrorCode::getValue, Function.identity()));
 
     //good way
-    public static ErrorCode byCount(String value) {
+    @JsonCreator
+    public static ErrorCode parse(String value) {
         return Optional.ofNullable(VALUE_TO_ENUM.get(value))
-            .orElseThrow(() -> new IllegalArgumentException(String.format("Have no code for value '%s'", value)));
+                .orElse(ErrorCode.UNEXPECTED);
     }
 
     //bad way
-    public static ErrorCode fromCount(String value) {
+    public static ErrorCode from(String value) {
         return Arrays.stream(ErrorCode.values())
             .filter(it -> it.getValue().equals(value))
             .findFirst()
-            .orElseThrow(() -> new IllegalArgumentException(String.format("Have no code for value '%s'", value)));
+            .orElse(ErrorCode.UNEXPECTED);
     }
 
     public static Set<String> getCodes() {
