@@ -16,6 +16,10 @@
 - 8 недостатков колонки типа enum в MySQL (2011 г.): http://komlenic.com/244/8-reasons-why-mysqls-enum-data-type-is-evil/
 - Преимущество enum колонок в PostgreSQL (2018 г.): https://habr.com/ru/post/353556/
 - Про недостатки enum'ов (2019 г.): https://habr.com/ru/post/476650/
+- Грокаем перечисления (2004 г.): http://madbean.com/2004/mb2004-3/
+- Почему перечисление имеет рекурсивное обобщение: http://www.angelikalanger.com/GenericsFAQ/FAQSections/TypeParameters.html#FAQ106
+- Объяснение почему в перечислениях статические блоки выполняются позже кодовых блоков и конструкторов: https://stackoverflow.com/questions/11419519/enums-static-and-instance-blocks
+- Различные способы реализации Singleton (enum ошибочно назван неленивым): https://habr.com/ru/post/129494/
 
 [enums]: /docs/enums_collections.md
 [effective-enums]: /docs/effective_enums.md
