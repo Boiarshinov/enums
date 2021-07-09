@@ -14,6 +14,7 @@
         <module>enums-in-api</module>
         <module>enums-in-db</module>
         <module>enums-in-java</module>
+        <module>enums-performance</module>
     </modules>
 
     <dependencies>
