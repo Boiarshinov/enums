@@ -54,6 +54,7 @@ int compareTo(E o);
 static <T extends Enum<T>> T valueOf(Class<T> enumType, String name);
 /* Методы класса Object */
 ```
+То же самое мы увидим в [документации Oracle](https://docs.oracle.com/javase/8/docs/api/java/lang/Enum.html).
 
 Подождите, но я точно помню, что использовал еще и статические методы `values()`, `valueOf(String name)`
 ```java
@@ -75,3 +76,31 @@ public abstract class Enum<E extends Enum<E>>
 ```java
 public abstract class Enum<E extends Enum>
 ```
+
+## Ответы:
+
+**Порядок выполнения кодовых блоков**: Дело в том, что при компиляции все конструкторы и нестатические блоки 
+в перечислениях преобразуются в статические блоки, которые устанавливаются в самой вершине генерируемого класса.
+Поэтому они исполняются раньше статического блока.
+Примерно так будет выглядеть 
+```java
+class EnumInit extends Enum<EnumInit> {
+    static { //Преобразовано из нестатического блока
+        System.out.print("C ");
+    }
+    public static EnumInit ONE = new EnumInit();
+    static { //Преобразовано из конструктора
+        System.out.print("D ");
+    }
+    
+    static { //Оставшийся статический блок
+        System.out.print("B ");
+    }
+    /* ... */
+}
+```
+
+**Несуществующие методы**: согласно [спецификации Java](https://docs.oracle.com/javase/specs/jls/se11/html/jls-8.html#jls-8.9.3) эти два метода являются неявно объявленными.
+Их реализация создается на этапе компиляции отдельно для каждого перечисления.
+
+**Рекурсивная типизация**: <mark>todo</mark>
