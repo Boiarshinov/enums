@@ -3,6 +3,7 @@
 <mark>todo введение. Тут нужно объявить в какой предметной области будут приведены примеры</mark>
 
 Содержание:
+- [X] [Введение](talk_intro.md)
 - [X] Перечисления в публичном API
   - [X] JSON
   - [ ] XML
@@ -15,6 +16,7 @@
 - [ ] Перечисление как Singleton
 - [ ] Внутреннее перечисление как способ организации бизнес-логики
 - [X] Использование перечислений в тестах
+- [ ] Выводы
 
 ## Перечисления в публичном API
 По поводу использования перечислений в публичном API сломано немало копий.
@@ -213,19 +215,126 @@ private Type type;
 ## Разделение слоев
 <mark>todo</mark>
 
-## Получение перечисления по параметру
+## Получение перечисления по значению
 
-<mark>Переписать с учетом предыдущих глав</mark>
+В предыдущих разделах мы увидели, что при использовании перечислений постоянно приходится преобразовывать перечисления в строки и наоборот.
+Если с прямым преобразованием все понятно - достаточно вызвать метод `name()` или дернуть нужный геттер, то с обратным не все так просто.
 
-Перечисления - замечательная вещь. 
-Они позволяют описать набор констант (дни недели, месяца).
-Еще они отлично помогают задать возможные состояния конечного автомата.
-И очень часто перечисления опираются на какое-либо значение.
-Например, перечисление `ChronoUnit` из стандартной библиотеки опирается на значение промежутка времени.
+Здесь хотелось бы рассмотреть отдельно парсинг значения перечисления по названию этого значения и по отдельному полю.
 
-В мире web-разработки, где балом правит JSON, тоже было бы полезно использовать перечисления, но JSON позволяет орудовать только строками.
-Поэтому нам зачастую приходится писать перечисление, базирующиеся на литералах.
-В качестве примера рассмотрим перечисление, инкапсулирующее коды ошибок сервиса Google ReCaptcha: (здесь и далее геттеры и конструкторы в коде не приводятся)
+### Получение перечисления по названию
+
+На первый взгляд ответ кажется очевидным: нужно использовать метод `valueOf()`, существующий во всех перечислениях, и дело с концом.
+```java
+var dayOfWeek = DayOfWeek.valueOf("SUNDAY");
+```
+Здесь мы встречаемся с небольшой проблемой - метод `valueOf()` падает с `IllegalArgumentException` при попытке распарсить несуществующее значение.
+Но в ряде случаев мы хотим, чтобы все несуществующие значения парсились в одно конкретное перечисление.
+Для обработки таких ситуаций рождается следующий код:
+```java
+public static ErrorCode valueOfOrDefault(String name) {
+    try {
+        return ErrorCode.valueOf(name);
+    } catch (IllegalArgumentException ignored) {
+        return ErrorCode.UNEXPECTED;
+    }
+}
+```
+
+Ах, если бы `valueOf()` возвращал `Optional`!
+
+Здесь нам на выручку приходят библиотеки Apache Commons и Guava.
+В них есть утилитные классы `EnumUtils` и `Enums` соответственно, которые предоставляют различные удобства для работы с перечислениями.
+В Guava есть метод, возвращающий `Optional`. Правда это Guav'овский `Optional`, поэтому выглядит немного непривычно:
+```java
+public static ErrorCode valueOfOrDefault(String name){
+    return Enums.getIfPresent(ErrorCode.class, name)
+        .or(ErrorCode.UNEXPECTED);
+}
+```
+
+С использованием Apache Commons это будет выглядеть так:
+```java
+public static ErrorCode valueOfOrDefault(String name){
+    return EnumUtils.getEnum(ErrorCode.class, name, ErrorCode.UNEXPECTED);
+}
+```
+
+А есть ли разница между этими тремя подходами?
+Ну и что с того, что самописная реализация получилась с наибольшим количеством строк, зато своя.
+Но может быть разработчики Apache Commons или Guava учли какие-то подводные камни или их реализации намного более производительные?
+Давайте заглянем внутрь.
+
+Как уже отмечалось в начале доклада, реализация метода `valueOf()` в классе `Enum` нам неизвестна.
+Дело в том, что она генерируется для каждого конкретного перечисления на этапе компиляции.
+Но мы можем посмотреть на реализации в библиотеках и попробовать сравнить производительность.
+
+Реализация Apache Commons написана в лоб и по сути повторяет нашу собственную:
+```java
+public static <E extends Enum<E>> E getEnum(final Class<E> enumClass, final String enumName, final E defaultEnum) {
+    if (enumName == null) {
+        return defaultEnum;
+    }
+    try {
+        return Enum.valueOf(enumClass, enumName);
+    } catch (final IllegalArgumentException ex) {
+        return defaultEnum;
+    }
+}
+```
+А вот реализация Guava уже интереснее: в утилитном классе `Enums` прячется кэш слабых ссылок, который заполняется при первом обращении к конкретному перечислению:
+```java
+private static final Map<Class<? extends Enum<?>>, Map<String, WeakReference<? extends Enum<?>>>>
+      enumConstantCache = new WeakHashMap<>();
+
+private static <T extends Enum<T>> Map<String, WeakReference<? extends Enum<?>>> populateCache(Class<T> enumClass) {
+    Map<String, WeakReference<? extends Enum<?>>> result = new HashMap<>();
+    for (T enumInstance : EnumSet.allOf(enumClass)) {
+      result.put(enumInstance.name(), new WeakReference<Enum<?>>(enumInstance));
+    }
+    enumConstantCache.put(enumClass, result);
+    return result;
+}
+```
+Кэш представляет собой мапу 'имя перечисления' - 'значение'.
+
+А помните, в начале доклада я упоминал, что в классе `Enum` есть еще один метод `valueOf()` - статический?
+Так вот его реализацию мы можем посмотреть и там внутри будет так же кэш в виде мапы:
+```java
+private transient volatile Map<String, T> enumConstantDirectory;
+
+Map<String, T> enumConstantDirectory() {
+    Map<String, T> directory = enumConstantDirectory;
+    if (directory == null) {
+        T[] universe = getEnumConstantsShared();
+        if (universe == null)
+            throw new IllegalArgumentException(
+                getName() + " is not an enum type");
+        directory = new HashMap<>((int)(universe.length / 0.75f) + 1);
+        for (T constant : universe) {
+            directory.put(((Enum<?>)constant).name(), constant);
+        }
+        enumConstantDirectory = directory;
+    }
+    return directory;
+}
+```
+
+Возможно кэши будут отрабатывать быстрее родной реализации `valueOf`.
+Для того чтобы проверить это, я написал [бенчмарки с использованием JMH](/enums-performance/src/main/java/benchmarks/byname).
+
+```
+Benchmark                 Mode  Cnt   Score   Error  Units
+Enum5Benchmark.apache     avgt    5   7,088 ± 0,101  ns/op
+Enum5Benchmark.diy        avgt    5   6,482 ± 0,027  ns/op
+Enum5Benchmark.diyStatic  avgt    5   6,231 ± 0,041  ns/op
+Enum5Benchmark.guava      avgt    5  12,538 ± 0,027  ns/op
+```
+<mark>добавить результатов для Enum100 и нарисовать графики</mark>
+
+
+### Получение перечисления по параметру
+
 ```java
 public enum ErrorCode {
     MISSING_INPUT_SECRET("missing-input-secret"),
@@ -354,6 +463,10 @@ void test(DayOfWeek dayOfWeek) { /* ... */ }
 ```
 
 Примечание - рекомендация 'не генерировать значения для тестов рандомно' применима не только к перечислениям, но и к полям любых других типов.
+
+## Выводы
+
+<mark>todo</mark>
 
 [enums-in-api-jpoint]: https://jpoint.ru/2021/talks/5mcrhi5tcv6kmbccdnfpte/
 [springdoc-github]: https://github.com/springdoc/springdoc-openapi

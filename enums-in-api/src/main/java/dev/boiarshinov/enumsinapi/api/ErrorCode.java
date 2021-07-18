@@ -42,6 +42,14 @@ public enum ErrorCode {
                 .orElse(ErrorCode.UNEXPECTED);
     }
 
+    public static ErrorCode valueOfOrDefault(String name) {
+        try {
+            return ErrorCode.valueOf(name);
+        } catch (IllegalArgumentException ignored) {
+            return ErrorCode.UNEXPECTED;
+        }
+    }
+
     //bad way
     public static ErrorCode from(String value) {
         return Arrays.stream(ErrorCode.values())

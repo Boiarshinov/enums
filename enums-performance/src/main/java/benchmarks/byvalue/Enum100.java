@@ -1,4 +1,4 @@
-package benchmarks;
+package benchmarks.byvalue;
 
 import java.util.Arrays;
 import java.util.EnumSet;
