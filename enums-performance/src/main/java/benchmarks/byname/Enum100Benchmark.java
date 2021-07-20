@@ -1,4 +1,4 @@
-package benchmarks.byvalue;
+package benchmarks.byname;
 
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -30,41 +30,49 @@ import java.util.stream.Collectors;
 public class Enum100Benchmark {
 
     //Нефинальное поле для того чтобы JIT не оптимизировал выполнение метода
-    private String[] values;
+    private String[] names;
 
     @Setup
     public void prepare() {
         //Будем проходиться по всем возможным значениям, раскиданным в рандомном порядке
-        List<String> valueList = EnumSet.allOf(Enum100.class).stream()
-            .map(Enum100::getValue)
+        List<String> nameList = EnumSet.allOf(Enum100.class).stream()
+            .map(Enum100::name)
             .collect(Collectors.toList());
-        Collections.shuffle(valueList);
-        values = valueList.toArray(new String[]{});
+        Collections.shuffle(nameList);
+        names = nameList.toArray(new String[]{});
 
         //Некоторые из методов создают кэш при первом вызове. Пусть лучше это делается здесь.
-        Enum100.parseByForLoop("any");
-        Enum100.parseByStream("any");
-        Enum100.parseByMap("any");
+        Enum100.diyValueOf("any");
+        Enum100.diyStaticValueOf("any");
+        Enum100.apacheValueOf("any");
+        Enum100.guavaValueOf("any");
     }
 
     @Benchmark
-    public void forLoop(Blackhole bh) {
-        for(String value: values) {
-            bh.consume(Enum100.parseByForLoop(value));
+    public void diy(Blackhole bh) {
+        for(String name: names) {
+            bh.consume(Enum100.diyValueOf(name));
         }
     }
 
     @Benchmark
-    public void stream(Blackhole bh) {
-        for(String value: values) {
-            bh.consume(Enum100.parseByStream(value));
+    public void diyStatic(Blackhole bh) {
+        for(String name: names) {
+            bh.consume(Enum100.diyStaticValueOf(name));
         }
     }
 
     @Benchmark
-    public void mapCache(Blackhole bh) {
-        for(String value: values) {
-            bh.consume(Enum100.parseByMap(value));
+    public void apache(Blackhole bh) {
+        for(String name: names) {
+            bh.consume(Enum100.apacheValueOf(name));
+        }
+    }
+
+    @Benchmark
+    public void guava(Blackhole bh) {
+        for(String name: names) {
+            bh.consume(Enum100.guavaValueOf(name));
         }
     }
 

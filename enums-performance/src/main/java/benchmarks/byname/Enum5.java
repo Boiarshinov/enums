@@ -3,12 +3,6 @@ package benchmarks.byname;
 import com.google.common.base.Enums;
 import org.apache.commons.lang3.EnumUtils;
 
-import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
 public enum Enum5 {
     ENUM_1,
     ENUM_2,
