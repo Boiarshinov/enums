@@ -1,6 +1,6 @@
-package singleton;
+package initorder;
 
-public enum EnumSingleton {
+public enum EnumInitOrder {
     INSTANCE;
 
     static {
@@ -11,7 +11,7 @@ public enum EnumSingleton {
         MessageHolder.messages.add(MessageConst.ENUM_CODE_BLOCK);
     }
 
-    EnumSingleton() {
+    EnumInitOrder() {
         MessageHolder.messages.add(MessageConst.ENUM_CONSTRUCTOR);
     }
 

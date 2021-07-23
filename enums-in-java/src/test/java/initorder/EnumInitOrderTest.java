@@ -1,4 +1,4 @@
-package singleton;
+package initorder;
 
 import org.junit.jupiter.api.Test;
 
@@ -6,7 +6,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class EnumSingletonTest {
+public class EnumInitOrderTest {
 
     static {
         MessageHolder.messages.add("Test static block");
@@ -43,8 +43,8 @@ public class EnumSingletonTest {
 
         MessageHolder.messages.add(MessageConst.TEST_METHOD_START);
 
-        EnumSingleton enumSingleton = EnumSingleton.INSTANCE;
-        enumSingleton.doWork();
+        EnumInitOrder enumInitOrder = EnumInitOrder.INSTANCE;
+        enumInitOrder.doWork();
 
         MessageHolder.messages.add(MessageConst.TEST_METHOD_FINISH);
 

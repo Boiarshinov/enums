@@ -1,4 +1,4 @@
-package singleton;
+package initorder;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
