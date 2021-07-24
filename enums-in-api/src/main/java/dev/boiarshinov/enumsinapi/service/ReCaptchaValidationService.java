@@ -1,9 +1,12 @@
-package dev.boiarshinov.enumsinapi.api;
+package dev.boiarshinov.enumsinapi.service;
 
+import dev.boiarshinov.enumsinapi.api.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
 import java.util.Set;
 
+@Component
 @RequiredArgsConstructor
 public class ReCaptchaValidationService {
 
@@ -20,10 +23,5 @@ public class ReCaptchaValidationService {
         }
 
         return false;
-    }
-
-
-    private interface GoogleReCaptchaClient {
-        Set<ErrorCode> validate(String recaptchaToken);
     }
 }
