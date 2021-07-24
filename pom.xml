@@ -15,6 +15,7 @@
         <module>enums-in-db</module>
         <module>enums-in-java</module>
         <module>enums-performance</module>
+        <module>enum-singleton</module>
     </modules>
 
     <dependencies>
