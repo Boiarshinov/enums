@@ -78,8 +78,8 @@ public abstract class Enum<E extends Enum>
 ```
 
 ## Ответы:
-
-**Порядок выполнения кодовых блоков**: Дело в том, что при компиляции все конструкторы и нестатические блоки 
+### Порядок выполнения кодовых блоков
+Дело в том, что при компиляции все конструкторы и нестатические блоки 
 в перечислениях преобразуются в статические блоки, которые устанавливаются в самой вершине генерируемого класса.
 Поэтому они исполняются раньше статического блока.
 Примерно так будет выглядеть 
@@ -100,7 +100,43 @@ class EnumInit extends Enum<EnumInit> {
 }
 ```
 
-**Несуществующие методы**: согласно [спецификации Java](https://docs.oracle.com/javase/specs/jls/se11/html/jls-8.html#jls-8.9.3) эти два метода являются неявно объявленными.
+### Несуществующие методы
+Согласно [спецификации Java](https://docs.oracle.com/javase/specs/jls/se11/html/jls-8.html#jls-8.9.3) эти два метода являются неявно объявленными.
 Их реализация создается на этапе компиляции отдельно для каждого перечисления.
 
-**Рекурсивная типизация**: <mark>todo</mark>
+Если заглянуть в байткод, то можно увидеть, что `valueOf(String)` на самом деле является синтаксическим сахаром над статическим методом `valueOf(Clacc, String)` в `Enum`:
+```java
+public final enum singleton/EnumSingleton extends java/lang/Enum {
+  //...  
+    
+  // access flags 0x9
+  public static values()[Lsingleton/EnumSingleton;
+   L0
+    LINENUMBER 5 L0
+    GETSTATIC singleton/EnumSingleton.$VALUES : [Lsingleton/EnumSingleton;
+    INVOKEVIRTUAL [Lsingleton/EnumSingleton;.clone ()Ljava/lang/Object;
+    CHECKCAST [Lsingleton/EnumSingleton;
+    ARETURN
+    MAXSTACK = 1
+    MAXLOCALS = 0
+
+  // access flags 0x9
+  public static valueOf(Ljava/lang/String;)Lsingleton/EnumSingleton;
+   L0
+    LINENUMBER 5 L0
+    LDC Lsingleton/EnumSingleton;.class
+    ALOAD 0
+    INVOKESTATIC java/lang/Enum.valueOf (Ljava/lang/Class;Ljava/lang/String;)Ljava/lang/Enum;
+    CHECKCAST singleton/EnumSingleton
+    ARETURN
+   L1
+    LOCALVARIABLE name Ljava/lang/String; L0 L1 0
+    MAXSTACK = 2
+    MAXLOCALS = 1
+    
+  // ...  
+}
+```
+
+### Рекурсивная типизация
+<mark>todo</mark>
