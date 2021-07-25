@@ -11,8 +11,10 @@
 - [X] Получение перечисления по значению
   - [X] Сравнение перфоманса
 - [ ] Разделение слоев
-- [ ] Коллекции с перечислениями
-- [ ] Перечисление как Singleton
+- [X] Перечисление как Singleton
+  - [X] Pure Java Enum Singleton
+  - [X] Enum Singleton как Spring Bean
+  - [X] Что там у Котлинистов?
 - [ ] Внутреннее перечисление как способ организации бизнес-логики
 - [ ] Использование перечислений в тестах
   - [X] Проход по значениям перечисления
@@ -474,7 +476,160 @@ Enum100Benchmark.stream    avgt    5  678,155 ± 104,548  ns/op
 ![enum_from_value](img/enum_from_value.jpg)
 
 ## Перечисление как Singleton
-<mark>todo</mark>
+Предлагаю опустить холивары на тему: является ли Singleton паттерном или антипаттерном.
+
+### Pure Java Enum Singleton
+Часто на собеседованиях спрашивают: как сделать потокобезопасный и ленивый Singleton?
+При этом обычно ожидают ответ с блоками `synchronized` вроде такого:
+```java
+public class Singleton {
+    private static volatile Singleton instance;
+	
+    public static Singleton getInstance() {
+		Singleton localInstance = instance;
+		if (localInstance == null) {
+			synchronized (Singleton.class) {
+				localInstance = instance;
+				if (localInstance == null) {
+					instance = localInstance = new Singleton();
+				}
+			}
+		}
+		return localInstance;
+	}
+}
+```
+
+Но есть гораздо более простой способ - перечисление.
+```java
+public enum EnumSingleton {
+    INSTANCE
+}
+```
+
+Создавать Singleton'ы таким способом нам советует Джошуа Блох в своей книге Effective Java:
+> ... single-element enum type is often the best way to implement a singleton.
+
+При создании такой синглтон точно потокобезопасен, ведь созданием экземпляра занимается `ClassLoader`.
+Также Enum Singleton можно с некоторой натяжкой назвать ленивым.
+Инстанс будет создан при первом обращении к классу.
+Так что если в вашем перечислении есть статические методы, которые вы хотите вызвать до первого обращения к инстансу - ленивая инициализация станет не такой уж ленивой.
+Но, мне кажется, что иметь статические методы или статические публичные поля в Singleton - странное решение. 
+Не для того же он создавался как объект, чтобы использоваться, как утилитный класс.  
+
+Перечисление может иметь мутируемое состояние.
+Мы не привыкли к тому, чтобы хранить в перечислении какое-либо состояние, но такой код вполне допустим с точки зрения компилятора Java:
+```java
+public enum EnumSingleton {
+    INSTANCE;
+
+    private String mutableField = "Initial value";
+
+    public void setMutableField(String mutableField) {
+        this.mutableField = mutableField;
+    }
+}
+```
+
+### Enum Singleton как Spring Bean
+Предположим, у вас развилась паранойя и вы боитесь, что какой-нибудь неопытный разработчик будет вручную создавать экземпляры спрингового бина со скоупом `singleton`, не зная о том, что это задача IoC контейнера.
+И вы решили ограничить такую возможность с помощью перечисления.
+
+Большинство спринговых бинов имеют зависимости от других бинов, поэтому нам нужно научиться внедрять эти зависимости в перечисление.
+Инъекция зависимостей с помощью конструктора нам не подойдет, потому что конструктор перечисления вызывается класс-лоадером.
+Будем использовать инъекцию с помощью сеттера.
+
+```java
+public enum EnumService {
+    INSTANCE;
+
+    private RegularService regularService;
+
+    public void setRegularService(RegularService regularService) {
+        this.regularService = regularService;
+    }
+    /* ... */
+}
+```
+
+Главная проблема впереди!
+При создании бинов спринговый IoC контейнер пытается вызвать их конструктор.
+Но у перечисления нельзя вызвать конструктор - это запрещено спецификацией Java.
+Поэтому приходится создавать специальную фабрику, которая будет вместо вызова конструктора возвращать экземпляр перечисления:
+```java
+public class EnumServiceFactory implements FactoryBean<EnumService> {
+
+    @Override
+    public EnumService getObject() {
+        return EnumService.INSTANCE;
+    }
+
+    @Override
+    public Class<?> getObjectType() {
+        return EnumService.class;
+    }
+
+    @Override
+    public boolean isSingleton() {
+        return true;
+    }
+}
+```
+
+Вот так с помощью нехитрых приспособлений можно превратить перечисление в Singleton и даже в спринговый бин.
+Но зачем?
+
+### Что там у Котлинистов?
+В Kotlin нет статических классов, методов и полей.
+Для того чтобы создать что-то вроде этого, используются `object` и `companion object`.
+Эти `object` являются ни чем иным, как синглтонами.
+При попытке вызвать код котлиновских объектов, не помеченный аннотацией `@JvmStatic`, из Java придется обращаться к функциональности через статический инстанс:
+```java
+KotlinObject.INSTANCE.doWork();
+```
+
+Интересно, воспользовались ли создатели Kotlin советом Джошуа Блоха?
+Для проверки напишем `object`:
+```kotlin
+object Singleton {
+    val internalField = "internal"
+}
+```
+
+и переведем его в байткод:
+```java
+// Байткод приведен не полностью
+// ================Singleton.class =================
+// class version 52.0 (52)
+// access flags 0x31
+public final class Singleton {
+
+  // access flags 0x1A
+  private final static Ljava/lang/String; internalField
+
+  // access flags 0x19
+  public final static LSingleton; INSTANCE
+  @Lorg/jetbrains/annotations/NotNull;() // invisible
+  
+  // ...
+}
+```
+
+Как видно, класс не унаследован от `Enum`, а инстанс является просто статическим финальным полем.
+
+Но вдруг Котлин просто не признает джавовый класс `Enum`?
+Но обычные котлиновские перечисления при переводе в байткод оказываются унаследованы от джавового `Enum`:
+```java
+// ================MyEnum.class =================
+// class version 52.0 (52)
+// access flags 0x4031
+// signature Ljava/lang/Enum<LMyEnum;>;
+// declaration: MyEnum extends java.lang.Enum<MyEnum>
+public final enum MyEnum extends java/lang/Enum {
+    // ...
+}
+```
+
 
 ## Внутреннее перечисление как способ организации бизнес-логики
 <mark>todo</mark>
