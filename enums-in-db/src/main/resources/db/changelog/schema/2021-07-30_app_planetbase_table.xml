@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+    <changeSet id="2021-07-30_add_planetbase_table" author="boiarshinov">
+        <createTable tableName="planet_base">
+            <column name="id"
+                    autoIncrement="true"
+                    type="bigint"
+            />
+            <column name="name"
+                    type="varchar"
+            />
+            <column name="solar_planet"
+                    type="varchar"
+            />
+        </createTable>
+        <addPrimaryKey tableName="planet_base" columnNames="id"/>
+    </changeSet>
+
+</databaseChangeLog>

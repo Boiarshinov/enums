@@ -1,5 +1,6 @@
 package dev.boiarshinov.enumsindb.db;
 
+import dev.boiarshinov.enumsindb.db.City.Continent;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -21,7 +22,7 @@ class CityRepositoryTest {
     void getWithKnownContinent() {
         City city = repo.getById(1L);
 
-        assertEquals(City.Continent.EURASIA, city.getContinent());
+        assertEquals(Continent.EURASIA, city.getContinent());
     }
 
     @Test
