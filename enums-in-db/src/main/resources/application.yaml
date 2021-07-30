@@ -1,5 +1,5 @@
 spring:
   liquibase:
-    change-log: db/changelog/2021-06-10_initial.xml
+    change-log: db/changelog/db.changelog-master.xml
   datasource:
     driver-class-name: org.postgresql.Driver

@@ -1,7 +1,5 @@
-package dev.boiarshinov.enumsindb;
+package dev.boiarshinov.enumsindb.db;
 
-import dev.boiarshinov.enumsindb.db.School;
-import dev.boiarshinov.enumsindb.db.SchoolRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
