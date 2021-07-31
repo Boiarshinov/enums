@@ -1,13 +1,12 @@
 # Effective enums
 
-<mark>todo введение. Тут нужно объявить в какой предметной области будут приведены примеры</mark>
-
 Содержание:
 - [X] [Введение](talk_intro.md)
 - [X] Перечисления в публичном API
   - [X] JSON
-  - [ ] Бинарные форматы  
-- [ ] Перечисления в БД
+- [X] Перечисления в БД
+  - [X] Маппинг перечисления в БД с помощью `@Enumerated`
+  - [X] Маппинг перечисления в БД с помощью `AttributeConverter`
 - [X] Получение перечисления по значению
   - [X] Сравнение перфоманса
 - [ ] Разделение слоев
@@ -194,23 +193,136 @@ public static ErrorCode parse(String value) {
 }
 ```
 
-### Protobuf и Avro
-<mark>todo</mark>
-
 ## Перечисления в БД
-Многие СУБД позволяют создавать в таблицах колонки с перечисляемым типом.
-Но это влечет за собой некоторые проблемы:
-- Добавление нового значения перечисления влечет за собой изменение схемы
-- Liquibase не поддерживает перечисляемые типы при описании миграции с помощью xml. Из-за этого такие миграции приходится писать на SQL, что требует написания еще и down миграций.
+В данном разделе будет рассматриваться работа с перечислениями только с помощью JPA. 
+Более низкоуровневые инструменты, такие как JDBC или Spring JdbcTemplates, не предоставляют никаких дополнительных возможностей по работе с перечислениями.
 
-Зато взамен вы получаете увеличенный перфоманс при фильтрации по этой колонке и существенно сокращаете размер индекса по этой колонке.
-
-При использовании JPA можно над полем перечисляемого типа в сущности поставить аннотацию `@Enumerated`.
+### Маппинг перечисления в БД с помощью `@Enumerated`
+Предположим, у нас есть сущность, одно из полей которой может быть выражено в виде перечисления.
+Пусть такой сущностью будет Город, а перечислением - Материк, на котором этот город расположен.
 ```java
-@Enumerated(EnumType.STRING)
-private Type type;
+@Entity
+public class City {
+    /* ... */
+
+    private Continent continent;
+    /* ... */
+}
 ```
-После этого обращаться с такими перечислениями нужно вдвойне осторожно, т.к. при изменении названия одного из значений, можно получить ошибки в рантайме при переводе `ResultSet` в объект доменной области.
+
+Для описания материков выберем модель, принятую в России, когда считается, что две Америки - это разные континенты, а Европа и Азия - один.
+```java
+public enum Continent {
+    AFRICA,
+    EURASIA,
+    NORTH_AMERICA,
+    SOUTH_AMERICA,
+    ANTARCTICA,
+    AUSTRALIA
+}
+```
+
+Если поле в виде перечисления в своей сущности, то JPA будет пытаться преобразовать его в число с помощью `ordinal()` и положить число в базу.
+Думаю, не стоит объяснять, что хранение `ordinal()` в базе данных не выдержит проверку временем.
+Чаще всего мы хотим хранить перечисление в БД в виде строки.
+Для этого нужно над полем перечисляемого типа поставить аннотацию `@Enumerated` с параметром `EnumType.STRING`:
+```java
+@Entity
+public class City {
+    /* ... */
+
+    @Enumerated(EnumType.STRING)
+    private Continent continent;
+    /* ... */
+}
+```
+Теперь перечисления будут автоматически преобразовываться в свои строковые наименования и заботливо укладываться в БД.
+
+Аннотацию `@Enumerated(EnumType.STRING)` можно использовать для тех перечислений, в неизменности которых мы уверены.
+Количество континентов вряд ли поменяется в ближайшее время, поэтому мы можем использовать `@Enumerated` в данном случае.
+Конечно, когда-нибудь тектонические плиты передвинутся и образуют новый континент.
+Если в базе данных каким-то образом окажется новый континент `PANGEIA`, то наше приложение упадет с уродливым `IllegalArgumentException`:
+```
+java.lang.IllegalArgumentException: No enum constant dev.boiarshinov.enumsindb.db.City.Continent.PANGEIA
+
+	at java.base/java.lang.Enum.valueOf(Enum.java:240)
+	at org.hibernate.type.descriptor.java.EnumJavaTypeDescriptor.fromName(EnumJavaTypeDescriptor.java:84)
+	at org.hibernate.type.descriptor.java.EnumJavaTypeDescriptor.wrap(EnumJavaTypeDescriptor.java:54)
+	at org.hibernate.type.descriptor.java.EnumJavaTypeDescriptor.wrap(EnumJavaTypeDescriptor.java:16)
+	at org.hibernate.type.descriptor.sql.VarcharTypeDescriptor$2.doExtract(VarcharTypeDescriptor.java:62)
+	at org.hibernate.type.descriptor.sql.BasicExtractor.extract(BasicExtractor.java:47)
+    // Стектрейс на 101 строку
+```
+
+Но это проблема программистов из далекого будущего.
+
+### Маппинг перечисления в БД с помощью `AttributeConverter`
+Гораздо ближе к нам проблема освоения солнечной системы.
+Предположим, наше приложение ведет учет планетарных баз в нашей солнечной системе.
+У каждой базы есть поле, указывающее на какой планете она расположена.
+```java
+@Entity
+public class PlanetBase {
+    /* ... */
+  
+    private SolarPlanet solarPlanet;
+    /* ... */
+}
+```
+Помните, как в 2006 году Плутон перестали считать полноценной планетой и перевели в карлики?
+Что на уме у этих астрономов?
+Кто следующий на очереди?
+Меркурий?
+
+Мы уже научены на опыте `ErrorCode`, что необходимо уметь обрабатывать неожиданные значения.
+Поэтому, когда Плутон исчез из нашего приложения, мы завели вместо него специальное значение - `UNKNOWN_MIDGET`:
+```java
+public enum SolarPlanet {
+    MERCURY,
+    VENUS,
+    EARTH,
+    MARS,
+    JUPITER,
+    SATURN,
+    URANUS,
+    NEPTUNIUM,
+    UNKNOWN_MIDGET
+}
+```
+
+Мы хотим, чтобы все неизвестные приложению планеты вроде Плутона, Церера и прочие, не ломали наше приложение, а парсились в `UNKNOWN_MIDGET`.
+Аннотация `@Enumerated` здесь уже не поможет.
+Необходимо написать кастомный JPA конвертер.
+Для этого необходимо унаследоваться от интерфейса `AttributeConverter` и поставить над классом аннотацию `@Converter`.
+Теперь мы можем заложить любую логику обработки неожиданных значений: вернуть `UNKNOWN_MIDGET`, залогировать варнинг или кинуть кастомное исключение. 
+```java
+@Converter
+public class SolarPlanetConverter
+    implements AttributeConverter<SolarPlanet, String>
+{
+    @Override
+    public String convertToDatabaseColumn(SolarPlanet planet) {
+        return planet.name();
+    }
+
+    @Override
+    public SolarPlanet convertToEntityAttribute(String planetName) {
+        try {
+            return SolarPlanet.valueOf(planetName);
+        } catch (IllegalArgumentException ignored) {
+            log.warn("Unknown planet '{}' was found while parsing data from db", planetName);
+            return SolarPlanet.UNKNOWN_MIDGET;
+        }
+    }
+}
+```
+
+А как же параметры в перечислениях, как в примере с `ErrorCode`?
+Что если мы хотим хранить в базе данных значения в том виде, в котором они используются на уровне API? 
+Не `MISSING_INPUT_SECRET`, а `missing-input-secret`.
+Не `SATISFACTORY`, а `B`.
+Для этого можно все так же использовать JPA `AttributeConverter`.
+Но на деле вам не стоит использовать одни и те же перечисления в базе данных и в публичном API. 
 
 ## Разделение слоев
 <mark>todo</mark>

@@ -22,6 +22,7 @@
 - Почему перечисление имеет рекурсивное обобщение: http://www.angelikalanger.com/GenericsFAQ/FAQSections/TypeParameters.html#FAQ106
 - Объяснение почему в перечислениях статические блоки выполняются позже кодовых блоков и конструкторов: https://stackoverflow.com/questions/11419519/enums-static-and-instance-blocks
 - Различные способы реализации Singleton (enum ошибочно назван неленивым): https://habr.com/ru/post/129494/
+- Маппинг перечислений в записи в БД с помощью JPA и Hibernate: https://thorben-janssen.com/hibernate-enum-mappings/
 
 [enums]: /docs/enums_collections.md
 [effective-enums]: /docs/effective_enums.md
