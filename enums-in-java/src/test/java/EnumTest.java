@@ -13,12 +13,17 @@ public class EnumTest {
     void valueOfAtNullValueByJavadoc() {
         assertThrows(IllegalArgumentException.class,
             () -> DayOfWeek.valueOf(null));
-        Enum.valueOf(DayOfWeek.class, "MONDAY");
     }
 
     @Test
     void valueOfAtNullValueExpectNPE() {
         assertThrows(NullPointerException.class,
             () -> DayOfWeek.valueOf(null));
+    }
+
+    @Test
+    void valueOf2AtNullName() {
+        assertThrows(NullPointerException.class,
+            () -> Enum.valueOf( DayOfWeek.class, null));
     }
 }
