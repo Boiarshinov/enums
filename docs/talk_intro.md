@@ -10,7 +10,7 @@
 
 Что будет выведено в консоль?
 ```java
-public class App {
+public class FirstQuiz {
     public static void main(String[] args) {
         System.out.print("A ");
         var enumInit = EnumInit.ONE;
@@ -34,10 +34,13 @@ public class App {
 }
 ```
 
+```
 1) A B C D
 2) B A C D
 3) B C D A
 4) A C D B
+5) Никакой из перечисленных
+```
 
 Правильный ответ - 4.
 Это значит, что перечисления инициализируются лениво, а обычные кодовые блоки и конструкторы исполняются раньше статических блоков.
