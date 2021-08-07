@@ -142,4 +142,23 @@ public final enum singleton/EnumSingleton extends java/lang/Enum {
 ```
 
 ### Рекурсивная типизация
-<mark>todo</mark>
+Чтобы понять, почему компилятор не уходит в бесконечную рекурсивную проверку, рассмотрим пример. 
+Есть класс `E`, который унаследован от класса `Clazz<E>`:
+```java
+final class E extends Clazz<E> {}
+```
+Компилятор запомнил, что `E extends Clazz<E>`.
+Теперь он переходит к проверке типов, объявленной в `Clazz`:
+```java
+abstract class Clazz<E extends Clazz<E>> {}
+```
+Теперь ему достаточно сравнить, что `E extends Clazz<E>` == `E extends Clazz<E>`. 
+И никакой рекурсии.
+
+#### Что произойдет, если убрать рекурсивную типизацию?
+Если убрать рекурсивную типизацию, то для методов, объявленных в классе `Enum` ничего не изменится.
+```java
+abstract class Enum<E extends Enum> { /* ... */} 
+```
+Все методы будут работать корректно, даже `compareTo(E)`.
+Подробное обсуждение этого вопроса можно найти на [StackOverflow](https://stackoverflow.com/questions/3067891/what-would-be-different-in-java-if-enum-declaration-didnt-have-the-recursive-pa).
