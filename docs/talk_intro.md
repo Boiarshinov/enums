@@ -71,13 +71,17 @@ DayOfWeek sunday = DayOfWeek.valueOf("SUNDAY");
 Дженерики и перечисления появились в Java одновременно.
 Джошуа Блох оторвался и сделал класс `Enum` рекурсивно обобщенным:
 ```java
-public abstract class Enum<E extends Enum<E>>
+public abstract class Enum<E extends Enum<E>> { 
+    /* ... */
+}
 ```
 Это вообще как?
 Как компилятор не спотыкается, пытаясь разрулить рекурсию типов?
 Что изменится, если убрать одно из обобщений?
 ```java
-public abstract class Enum<E extends Enum>
+public abstract class Enum<E extends Enum> {
+    /* ... */
+}
 ```
 
 ## Ответы:

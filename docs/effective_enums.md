@@ -53,7 +53,7 @@ public enum ErrorCode {
     BAD_REQUEST("bad-request"),
     TIMEOUT_OR_DUPLICATE("timeout-or-duplicate");
 
-    private final String value; //Логика получения перечисления из строки опущена
+    private final String value;
 
     public static final EnumSet<ErrorCode> RECOVERABLE_ERRORS = EnumSet.of(
             MISSING_INPUT_RESPONSE,
@@ -78,8 +78,7 @@ public enum ErrorCode {
     TIMEOUT_OR_DUPLICATE("timeout-or-duplicate"),
     INVALID_KEYS("invalid-keys");
 
-    private final String value; //Логика получения перечисления из строки опущена
-    /* ... */
+    private final String value;
 }
 ```
 
@@ -101,8 +100,7 @@ public enum ErrorCode {
     INVALID_KEYS("invalid-keys"),
     UNEXPECTED("unexpected");
 
-    private final String value; //Логика получения перечисления из строки опущена
-    /* ... */
+    private final String value;
 }
 ```
 
