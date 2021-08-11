@@ -336,17 +336,17 @@ public class SolarPlanetConverter
 
 На первый взгляд ответ кажется очевидным: нужно использовать метод `valueOf()`, существующий во всех перечислениях, и дело с концом.
 ```java
-var dayOfWeek = DayOfWeek.valueOf("SUNDAY");
+var continent = Continent.valueOf("AFRICA");
 ```
 Здесь мы встречаемся с небольшой проблемой - метод `valueOf()` падает с `IllegalArgumentException` при попытке распарсить несуществующее значение.
 Но в ряде случаев мы хотим, чтобы все несуществующие значения парсились в одно конкретное перечисление.
 Для обработки таких ситуаций рождается следующий код:
 ```java
-public static ErrorCode valueOfOrDefault(String name) {
+public static SolarPlanet valueOfOrDefault(String name) {
     try {
-        return ErrorCode.valueOf(name);
+        return SolarPlanet.valueOf(name);
     } catch (IllegalArgumentException ignored) {
-        return ErrorCode.UNEXPECTED;
+        return SolarPlanet.UNKNOWN_MIDGET;
     }
 }
 ```
@@ -357,16 +357,16 @@ public static ErrorCode valueOfOrDefault(String name) {
 В них есть утилитные классы `EnumUtils` и `Enums` соответственно, которые предоставляют различные удобства для работы с перечислениями.
 В Guava есть метод, возвращающий `Optional`. Правда это Guav'овский `Optional`, поэтому выглядит немного непривычно:
 ```java
-public static ErrorCode valueOfOrDefault(String name){
-    return Enums.getIfPresent(ErrorCode.class, name)
-        .or(ErrorCode.UNEXPECTED);
+public static SolarPlanet valueOfOrDefault(String name){
+    return Enums.getIfPresent(SolarPlanet.class, name)
+        .or(SolarPlanet.UNKNOWN_MIDGET);
 }
 ```
 
 С использованием Apache Commons это будет выглядеть так:
 ```java
-public static ErrorCode valueOfOrDefault(String name){
-    return EnumUtils.getEnum(ErrorCode.class, name, ErrorCode.UNEXPECTED);
+public static SolarPlanet valueOfOrDefault(String name){
+    return EnumUtils.getEnum(SolarPlanet.class, name, SolarPlanet.UNKNOWN_MIDGET);
 }
 ```
 
