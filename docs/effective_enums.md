@@ -381,7 +381,11 @@ public static SolarPlanet valueOfOrDefault(String name){
 
 Реализация Apache Commons написана в лоб и по сути повторяет нашу собственную:
 ```java
-public static <E extends Enum<E>> E getEnum(final Class<E> enumClass, final String enumName, final E defaultEnum) {
+public static <E extends Enum<E>> E getEnum(
+        final Class<E> enumClass, 
+        final String enumName, 
+        final E defaultEnum
+) {
     if (enumName == null) {
         return defaultEnum;
     }
@@ -397,7 +401,9 @@ public static <E extends Enum<E>> E getEnum(final Class<E> enumClass, final Stri
 private static final Map<Class<? extends Enum<?>>, Map<String, WeakReference<? extends Enum<?>>>>
       enumConstantCache = new WeakHashMap<>();
 
-private static <T extends Enum<T>> Map<String, WeakReference<? extends Enum<?>>> populateCache(Class<T> enumClass) {
+private static <T extends Enum<T>> 
+    Map<String, WeakReference<? extends Enum<?>>> populateCache(Class<T> enumClass) 
+{
     Map<String, WeakReference<? extends Enum<?>>> result = new HashMap<>();
     for (T enumInstance : EnumSet.allOf(enumClass)) {
       result.put(enumInstance.name(), new WeakReference<Enum<?>>(enumInstance));
@@ -523,8 +529,9 @@ public static ErrorCode from(String value) {
 Хочешь улучшить производительность - наверни кэш в виде мапы!
 Запишется это так:
 ```java
-private static final Map<String, ErrorCode> VALUE_TO_ENUM = EnumSet.allOf(ErrorCode.class).stream()
-    .collect(Collectors.toMap(ErrorCode::getValue, Function.identity()));
+private static final Map<String, ErrorCode> VALUE_TO_ENUM = 
+        EnumSet.allOf(ErrorCode.class).stream()
+            .collect(Collectors.toMap(ErrorCode::getValue, Function.identity()));
 
 public static ErrorCode parse(String value) {
     return Optional.ofNullable(VALUE_TO_ENUM.get(value))
