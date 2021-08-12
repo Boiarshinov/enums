@@ -446,18 +446,18 @@ Map<String, T> enumConstantDirectory() {
 ```
 Benchmark                 Mode  Cnt   Score   Error  Units
 Enum5Benchmark.apache     avgt    5   7,088 ± 0,101  ns/op
-Enum5Benchmark.diy        avgt    5   6,482 ± 0,027  ns/op
-Enum5Benchmark.diyStatic  avgt    5   6,231 ± 0,041  ns/op
 Enum5Benchmark.guava      avgt    5  12,538 ± 0,027  ns/op
+Enum5Benchmark.valueOf    avgt    5   6,482 ± 0,027  ns/op
+Enum5Benchmark.valueOf2   avgt    5   6,231 ± 0,041  ns/op
 ```
 
 Для 100 элементов:
 ```
 Benchmark                   Mode  Cnt   Score   Error  Units
 Enum100Benchmark.apache     avgt    5   7,947 ± 1,008  ns/op
-Enum100Benchmark.diy        avgt    5   7,144 ± 0,822  ns/op
-Enum100Benchmark.diyStatic  avgt    5   7,225 ± 0,874  ns/op
 Enum100Benchmark.guava      avgt    5  13,271 ± 2,412  ns/op
+Enum100Benchmark.valueOf    avgt    5   7,144 ± 0,822  ns/op
+Enum100Benchmark.valueOf2   avgt    5   7,225 ± 0,874  ns/op
 ```
 <mark>нарисовать графики</mark>
 
