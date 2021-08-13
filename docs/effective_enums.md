@@ -749,7 +749,107 @@ public final enum MyEnum extends java/lang/Enum {
 
 
 ## Внутреннее перечисление как способ организации бизнес-логики
-<mark>todo</mark>
+Давайте рассмотрим следующий пример: Пусть один из наших публичных API принимает в одном из полей индивидуальный номер налогоплательщика (ИНН).
+Мы хотим принимать только валидные значения ИНН.
+Для валидации ИНН существуют следующие правила:
+- персональный ИНН имеет длину в 12 цифр;
+- ИНН юридического лица имеет длину в 10 цифр;
+- последовательность первых 9/10 цифр при преобразовании по заданной формуле должна быть равна контрольной сумме.
+
+Формулу расчета контрольной суммы можно посмотреть на [Wikipedia][inn-wiki].
+
+Для валидации входных данных я обычно использую библиотеку Bean Validation, построенную на аннотациях.
+Класс, валидирующий ИНН, будет выглядеть следующим образом:
+```java
+import jakarta.validation.ConstraintValidator;
+
+public class INNValidator implements ConstraintValidator<INN, CharSequence> {
+    @Override
+    public boolean isValid(CharSequence innCharSeq, ConstraintValidatorContext context) {
+        /* ... */
+    }
+}
+```
+
+Для того чтобы сделать код проверок более гибким, напишем приватный интерфейс, выполняющий проверки:
+```java
+private interface INNValidationAlgorithm {
+    boolean isValidLength(int length);
+    boolean isValidChecksum(int[] digits);
+}
+```
+
+Теперь опишем различные кейсы валидации с помощью внутреннего перечисления
+```java
+private enum INNValidationAlgorithmImpl implements INNValidationAlgorithm {
+    INDIVIDUAL {
+        public boolean isValidLength(int length) { return 12 == length; }
+        public boolean isValidChecksum(int[] digits) { /* ... */ }
+    },
+    JURIDICAL {
+        public boolean isValidLength(int length) { return 10 == length; }
+        public boolean isValidChecksum(int[] digits) { /* ... */ }
+    },
+    ANY {
+        public boolean isValidLength(int length) { return 10 == length || 12 == length; }
+        public boolean isValidChecksum(int[] digits) { /* ... */ };
+    }
+}
+```
+
+Необходимую реализацию интерфейс будет выбирать самостоятельно на основании того, какие ограничения были установлены для поля:
+```java
+private interface INNValidationAlgorithm {
+    boolean isValidLength(int length);
+    boolean isValidChecksum(int[] digits);
+
+    static INNValidationAlgorithm from(INN.Type type) {
+        switch ( type ) {
+            case JURIDICAL:
+                return INNValidationAlgorithmImpl.JURIDICAL; 
+            case INDIVIDUAL:
+			    return INNValidationAlgorithmImpl.INDIVIDUAL;
+		    case ANY:
+			default:
+				return INNValidationAlgorithmImpl.ANY;
+		}
+	}
+}
+```
+
+> Интерфейс знает о своих реализациях? Это же нарушение всех заповедей чистой архитектуры!
+
+А вот и нет! 
+Интерфейс был объявлен приватным и не предназначен для расширения.
+Как раз для решения задач, подобной этой, в Java 17 (JEP 409) появятся Sealed interfaces.
+Другими словами, внутреннее перечисления для разделения бизнес-логики - это Sealed interfaces для бедных.
+
+### Минутка саморекламы
+Если в вашем приложении тоже приходится проводить проверки ИНН на валидность, то спешу вас обрадовать.
+Начиная с версии 6.2, в Hibernate Validator (самая популярная реализация стандарта Bean Validation) добавилась аннотация `@INN`:
+```java
+/**
+ * Checks that the annotated character sequence is a valid russian taxpayer
+ * identification number (INN in russian transliteration).
+ *
+ * @author Artem Boiarshinov
+ * @see <a href="https://www.nalog.ru/rn77/fl/interest/inn/">russian taxpayer identification number</a>
+ */
+@Documented
+@Constraint(validatedBy = {})
+@Target({ METHOD, FIELD, ANNOTATION_TYPE, CONSTRUCTOR, PARAMETER, TYPE_USE })
+@Retention(RUNTIME)
+@Repeatable(List.class)
+@ReportAsSingleViolation
+public @interface INN {
+    /* ... */
+}
+```
+
+В этой библиотеке можно подробнее ознакомиться с описанной концепцией.
+
+Если вы используете Spring Boot, то вам эта аннотация будет доступна, начиная с версии Spring Boot 2.5 (май 2021).
+
 
 ## Использование перечислений в юнит-тестах
 ### Проход по значениям перечисления
@@ -804,3 +904,4 @@ void test(DayOfWeek dayOfWeek) { /* ... */ }
 [so_enums_in_db]: https://stackoverflow.com/questions/2318123/postgresql-enum-what-are-the-advantages-and-disadvantages/2322214
 [so_enum_by_value_1]: https://stackoverflow.com/questions/4886973/the-proper-way-to-look-up-an-enum-by-value
 [so_enum_by_value_2]: https://stackoverflow.com/questions/55591953/java-enum-with-constructor-best-way-to-get-value-by-constructor-argument
+[inn-wiki]: https://ru.wikipedia.org/wiki/%D0%98%D0%B4%D0%B5%D0%BD%D1%82%D0%B8%D1%84%D0%B8%D0%BA%D0%B0%D1%86%D0%B8%D0%BE%D0%BD%D0%BD%D1%8B%D0%B9_%D0%BD%D0%BE%D0%BC%D0%B5%D1%80_%D0%BD%D0%B0%D0%BB%D0%BE%D0%B3%D0%BE%D0%BF%D0%BB%D0%B0%D1%82%D0%B5%D0%BB%D1%8C%D1%89%D0%B8%D0%BA%D0%B0#%D0%92%D1%8B%D1%87%D0%B8%D1%81%D0%BB%D0%B5%D0%BD%D0%B8%D0%B5_%D0%BA%D0%BE%D0%BD%D1%82%D1%80%D0%BE%D0%BB%D1%8C%D0%BD%D1%8B%D1%85_%D1%86%D0%B8%D1%84%D1%80
