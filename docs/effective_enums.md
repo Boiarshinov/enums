@@ -222,6 +222,34 @@ Lesson:
       type: string
 ```
 
+
+## Разделение слоев
+<mark>todo</mark>
+
+```yaml
+Order:
+  type: object
+  properties:
+    id:
+      type: integer
+      format: int64
+    status:
+      type: string
+      enum:
+      - APPROVAL_PENDING
+      - CREATE_PENDING
+      - CREATED
+      - ASSEMBLING_PENDING
+      - ASSEMBLING
+      - ASSEMBLED
+      - NOT_APPROVED
+      - CANCEL_PENDING
+      - CANCELLED
+      - ERROR
+      - REASON_SEARCHING
+```
+
+
 ## Перечисления в БД
 В данном разделе будет рассматриваться работа с перечислениями только с помощью JPA. 
 Более низкоуровневые инструменты, такие как JDBC или Spring JdbcTemplates, не предоставляют никаких дополнительных возможностей по работе с перечислениями.
@@ -353,8 +381,6 @@ public class SolarPlanetConverter
 Для этого можно все так же использовать JPA `AttributeConverter`.
 Но на деле вам не стоит использовать одни и те же перечисления в базе данных и в публичном API. 
 
-## Разделение слоев
-<mark>todo</mark>
 
 ## Получение перечисления по значению
 
