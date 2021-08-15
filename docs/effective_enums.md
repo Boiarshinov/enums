@@ -114,8 +114,19 @@ public enum ErrorCode {
 Но это не повод не использовать перечисления в Java коде.
 Если вы используете Jackson для сериализации в JSON, то он прекрасно справляется с преобразованием перечислений в строки.
 ```java
-// DayOfWeek - стандартное перечисление из пакета java.time
-assertEquals("\"MONDAY\"", objectMapper.writeValueAsString(DayOfWeek.MONDAY));
+@Test
+void serializeEnum() throws JsonProcessingException {
+    String day = objectMapper.writeValueAsString(DayOfWeek.MONDAY);
+    assertEquals("\"MONDAY\"", day);
+}
+```
+И в обратную сторону:
+```java
+@Test
+void deserializeEnum() throws JsonProcessingException {
+    DayOfWeek day = objectMapper.readValue("\"MONDAY\"", DayOfWeek.class);
+    assertEquals(DayOfWeek.MONDAY, day);
+}
 ```
 
 Все клиенты вашего API будут бесконечно благодарны, если в документации на API вы опишете все возможные значения перечисляемого поля. 
