@@ -1004,6 +1004,7 @@ void test() {
         PeriodType.ONE_TIME,
         PayerType.JURIDICAL
     );
+    // act, assert
 }
 ```
 
@@ -1021,9 +1022,10 @@ object PaymentCreator {
 ```kotlin
 @Test
 fun test() {
-    var payment = PaymentCreator.create(
+    val payment = PaymentCreator.create(
         payerType = PayerType.JURIDICAL
     )
+    // act, assert
 }
 ```
 
