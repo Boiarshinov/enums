@@ -50,12 +50,14 @@ public class FirstQuiz {
 
 Если вы откроете класс `Enum`, то увидите в нем следующие публичные методы:
 ```java
-String name();
-int ordinal();
-Class<E> getDeclaringClass();
-int compareTo(E o);
-static <T extends Enum<T>> T valueOf(Class<T> enumType, String name);
-/* Методы класса Object */
+class Enum<E extends Enum<E>> {
+    String name() { /* ... */ }
+    int ordinal() { /* ... */ }
+    Class<E> getDeclaringClass() { /* ... */ }
+    int compareTo(E o) { /* ... */ }
+    static <T extends Enum<T>> T valueOf(Class<T> enumType, String name) { /* ... */ }
+    /* Методы класса Object */
+}
 ```
 То же самое мы увидим в [документации Oracle](https://docs.oracle.com/javase/8/docs/api/java/lang/Enum.html).
 

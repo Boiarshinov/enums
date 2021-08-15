@@ -960,6 +960,7 @@ void test() {
     payment.setPeriod(/* ... */);
     payment.setPayer(/* ... */);
     payment.setInn(/* ... */)
+    // act, assert
 }
 ```
 
