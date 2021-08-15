@@ -129,6 +129,61 @@ void deserializeEnum() throws JsonProcessingException {
 }
 ```
 
+#### Почему ваш JSON на меня орет?
+
+При интеграции с каким-либо сервисом перечисления в его API могут быть заданы с помощью магических чисел или непривычным для Java кодстайла способом.
+Например, в [API Яндекс.Маркета][yandex-api] статусы задаются в числовом виде, а в [API Google ReCaptcha][recaptcha-api] коды ошибок задаются в кебаб-кейсе.
+В своем коде же мы хотели бы видеть эти значения в виде перечислений.
+
+Для перевода значения в перечисление можно было бы написать конвертер, но Jackson предоставляет более удобный способ.
+Достаточно поставить над полем в вашем перечислении аннотацию `@JsonValue`.
+```java
+public enum Grade {
+    EXCELLENT('A'),
+    SATISFACTORY('B'),
+    MEDIOCRE('C'),
+    INSUFFICIENT('D'),
+    FAILURE('F');
+    
+    @JsonValue
+    private final char mark;
+}
+```
+Теперь при сериализации такого перечисления в JSON он будет приведен к значению, помеченному `@JsonValue`.
+```json
+{
+    "grade": "A"
+}
+```
+
+То же работает и в обратную сторону: при парсинге JSON Jackson будет автоматически переводить строковое значение в перечисление.
+
+Ранее мы разобрали, что при получении данных из внешних источников в большинстве случаев стоит закладывать отдельное перечисление для незадокументированных значений.
+Поэтому при получении данных для парсинга лучше использовать статический метод генерации, помеченный аннотацией `@JsonCreator`:
+```java
+public enum ErrorCode {
+    /* ... */
+    @JsonCreator
+    public static ErrorCode parse(String value) {
+        return Arrays.stream(values())
+            .filter(it -> it.getValue().equals(value))
+            .findFirst()
+            .orElse(ErrorCode.UNEXPECTED);
+    }
+}
+```
+
+
+```json
+{
+    "error-codes": [
+        "invalid-keys",
+        "timeout-or-duplicate"
+    ]
+}
+```
+
+#### Генерация Open API
 Все клиенты вашего API будут бесконечно благодарны, если в документации на API вы опишете все возможные значения перечисляемого поля. 
 Многие openApi генераторы (я использую [springdoc][springdoc-github]), преобразующие DTO в openApi схему, умеют работать с перечислениями. 
 Например, вот такой DTO
@@ -136,7 +191,7 @@ void deserializeEnum() throws JsonProcessingException {
 public class Lesson {
 
     private String discipline;
-    private DayOfWeek dayOfWeek; //Стандартное перечисление из java.time
+    private DayOfWeek dayOfWeek;
     private int order;
     private String cabinet;
 }
@@ -164,42 +219,6 @@ Lesson:
       format: int32
     cabinet:
       type: string
-```
-<mark>todo</mark>
-
-#### Почему ваш JSON на меня орет?
-
-При интеграции с каким-либо сервисом перечисления в его API могут быть заданы с помощью магических чисел или непривычным для Java кодстайла способом.
-Например, в [API Яндекс.Маркета][yandex-api] статусы задаются в числовом виде, а в [API Google ReCaptcha][recaptcha-api] коды ошибок задаются в кебаб-кейсе. 
-В своем коде же мы хотели бы видеть эти значения в виде перечислений.
-
-Для перевода значения в перечисление можно было бы написать конвертер, но Jackson предоставляет более удобный способ.
-Достаточно поставить над полем в вашем перечислении аннотацию `@JsonValue`.
-```java
-@Getter
-@RequiredArgsConstructor
-public enum Grade {
-  EXCELLENT('A'),
-  SATISFACTORY('B'),
-  MEDIOCRE('C'),
-  INSUFFICIENT('D'),
-  FAILURE('F');
-    
-  @JsonValue
-  private final char mark;
-}
-```
-Теперь при сериализации такого перечисления в JSON он будет приведен к значению, помеченному `@JsonValue`.
-То же работает и в обратную сторону: при парсинге JSON Jackson будет автоматически переводить строковое значение в перечисление.
-
-Ранее мы разобрали, что при получении данных из внешних источников в большинстве случаев стоит закладывать отдельное перечисление для незадокументированных значений.
-Поэтому при получении данных для парсинга лучше использовать не `@JsonValue`, а статический метод генерации, помеченный аннотацией `@JsonCreator`:
-```java
-@JsonCreator
-public static ErrorCode parse(String value) {
-    return Optional.ofNullable(VALUE_TO_ENUM_MAP.get(value))
-        .orElse(ErrorCode.UNEXPECTED);
-}
 ```
 
 ## Перечисления в БД
