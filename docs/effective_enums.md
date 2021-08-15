@@ -864,7 +864,7 @@ public @interface INN {
 ```java
 @ParameterizedTest
 @EnumSource
-void test(DayOfWeek dayOfWeek) { /* ... */ }
+void test(Continent continent) { /* ... */ }
 ```
 По аргументу тестового метода аннотация сама поймет тип перечисления и тест будет проведен для всех его значений.
 
@@ -872,21 +872,20 @@ void test(DayOfWeek dayOfWeek) { /* ... */ }
 Неудобство заключается в том, что конкретные значения перечисления передаются в виде строк, что может грозить ошибками при рефакторинге.
 ```java
 @ParameterizedTest
-@EnumSource(mode = EnumSource.Mode.EXCLUDE, names = {"SUNDAY"})
-void test(DayOfWeek dayOfWeek) { /* ... */ }
+@EnumSource(mode = EnumSource.Mode.EXCLUDE, names = {"UNKNOWN_MIDGET"})
+void test(SolarPlanet solarPlanet) { /* ... */ }
 ```
 
 Для того чтобы избежать ошибок при рефакторинге лучше пользоваться аннотацией `@MethodSource`, а необходимые значения перечисления описывать с помощью `EnumSet`.
 ```java
-private static Stream<Arguments> dayOfWeekProvider() {
-    EnumSet<DayOfWeek> exclusionSet = EnumSet.of(DayOfWeek.SUNDAY);
-    return EnumSet.complementOf(exclusionSet).stream()
-        .map(Arguments::of);
+private static Stream<Arguments> solarPlanetProvider() {
+    EnumSet<SolarPlanet> exclusionSet = EnumSet.of(SolarPlanet.UNKNOWN_MIDGET);
+    return EnumSet.complementOf(exclusionSet).stream().map(Arguments::of);
 }
         
 @ParameterizedTest
-@MethodSource("dayOfWeekProvider")
-void test(DayOfWeek dayOfWeek) { /* ... */ }
+@MethodSource("solarPlanetProvider")
+void test(SolarPlanet solarPlanet) { /* ... */ }
 ```
 
 Примечание - рекомендация 'не генерировать значения для тестов рандомно' применима не только к перечислениям, но и к полям любых других типов.
