@@ -26,4 +26,4 @@
 
 [enums]: /docs/enums_collections.md
 [effective-enums]: /docs/effective_enums.md
-[enum-set]: /enums-in-java/src/test/java/collections/EnumSetTest.java
+[enum-set]: /enums-in-java/src/test/java/dev/boiarshinov/enumsinjava/collections/EnumSetTest.java
