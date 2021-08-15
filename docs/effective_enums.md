@@ -892,7 +892,135 @@ void test(DayOfWeek dayOfWeek) { /* ... */ }
 Примечание - рекомендация 'не генерировать значения для тестов рандомно' применима не только к перечислениям, но и к полям любых других типов.
 
 ### Генерация тестовых моделей
-<mark>todo</mark>
+Рассмотрим такой пример: наш сервис может принимать платежи.
+Данные о платеже приходят в наш API. 
+Состав полей может различаться в зависимости от различных условий.
+Например, платеж может быть совершен единоразово и тогда указывается только дата платежа (оплата штрафа), или за определенный период (счет за электричество), или за промежуток времени (аренда сервера в облаке).
+Плательщик может быть физическим лицом, индивидуальным предпринимателем или организацией.
+
+Представление состава полей приведено в формате JSON:
+```json
+{
+  "amount": 1000,
+  "currency": "RUB",
+  "purpose": "Аренда пенька",
+  "inn": "0123456789",
+  "period": {
+    
+  },
+  "payer": {
+    
+  }
+}
+```
+
+Различные варианты блока `period`:
+```json
+{
+  "date": "2021-03-08"
+}
+```
+
+```json
+{
+  "value": "JAN",
+  "period_type": "month"
+}
+```
+
+```json
+{
+  "from": "2021-03-08T15:30:00",
+  "to": "2021-03-08T16:25:15"
+}
+```
+
+Различные варианты блока `payer`:
+```json
+{
+  "name": "Саня",
+  "phone": "+78005553535"
+}
+```
+
+```json
+{
+  "ip_name": "ИП Поциков А.В.",
+  "ogrnip": "321011234567890"
+}
+```
+
+```json
+{
+  "title": "ООО Санёк и сыновья",
+  "kpp": "123456789"
+}
+```
+
+```java
+@Test
+void test() {
+    var payment = TestUtils.createPayment();
+    payment.setPeriod(/* ... */);
+    payment.setPayer(/* ... */);
+    payment.setInn(/* ... */)
+}
+```
+
+```java
+public class PaymentCreator {
+    /* ... */
+
+    public enum PeriodType {
+        ONE_TIME,
+        PERIODIC,
+        FROM_TO
+    }
+
+    public enum PayerType {
+        PERSON,
+        INDIVIDUAL_MERCHANT,
+        JURIDICAL
+    }
+}
+```
+
+```java
+public class PaymentCreator {
+    public static Payment create(
+        PeriodType periodType, 
+        PayerType payerType
+    ) { /* ... */ }
+}
+```
+
+```java
+@Test
+void test() {
+    var payment = PaymentCreator.create(
+        PeriodType.ONE_TIME,
+        PayerType.JURIDICAL
+    );
+}
+```
+
+```kotlin
+object PaymentCreator {
+    fun create(
+        PeriodType periodType = ONE_TIME, 
+        PayerType payerType = PERSON
+    ) : Payment { /* ... */ }
+}
+```
+
+```kotlin
+@Test
+fun test() {
+    var payment = PaymentCreator.create(
+        payerType = PayerType.JURIDICAL
+    )
+}
+```
 
 ## Выводы
 <mark>todo</mark>
