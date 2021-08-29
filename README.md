@@ -13,16 +13,16 @@
 - `enum-singleton` - использование перечисления в качестве спрингового бина.
 
 ## Разные статейки про перечисления
-- Статья со странным слогом про некоторые фишки enum: https://habr.com/ru/post/321152/
-- Подход к использованию enum'ов в качестве стратегии (не работает для DI-контейнеров): https://habr.com/ru/post/101280/
-- 8 недостатков колонки типа enum в MySQL (2011 г.): http://komlenic.com/244/8-reasons-why-mysqls-enum-data-type-is-evil/
-- Преимущество enum колонок в PostgreSQL (2018 г.): https://habr.com/ru/post/353556/
-- Про недостатки enum'ов (2019 г.): https://habr.com/ru/post/476650/
-- Грокаем перечисления (2004 г.): http://madbean.com/2004/mb2004-3/
-- Почему перечисление имеет рекурсивное обобщение: http://www.angelikalanger.com/GenericsFAQ/FAQSections/TypeParameters.html#FAQ106
-- Объяснение почему в перечислениях статические блоки выполняются позже кодовых блоков и конструкторов: https://stackoverflow.com/questions/11419519/enums-static-and-instance-blocks
-- Различные способы реализации Singleton (enum ошибочно назван неленивым): https://habr.com/ru/post/129494/
-- Маппинг перечислений в записи в БД с помощью JPA и Hibernate: https://thorben-janssen.com/hibernate-enum-mappings/
+- [Enum-Всемогущий](https://habr.com/ru/post/321152/) - Статья со странным слогом про некоторые фишки `enum` - 2017 г.
+- [Несколько слов об использовании перечислений в изменяющейся среде](https://habr.com/ru/post/101280/) - Подход к использованию enum'ов в качестве стратегии (не работает для DI-контейнеров) - 2010 г.
+- [8 Reasons Why MySQL's ENUM Data Type Is Evil](http://komlenic.com/244/8-reasons-why-mysqls-enum-data-type-is-evil/) - 8 недостатков колонки типа `enum` в MySQL - 2011 г.
+- [Postgres Enum](https://habr.com/ru/post/353556/) - Преимущество enum колонок в PostgreSQL - 2018 г.
+- [Место enum в современном изменчивом мире](https://habr.com/ru/post/476650/) - Про недостатки enum'ов - 2019 г. 
+- [Groking Enum (aka Enum>)](http://madbean.com/2004/mb2004-3/) - Грокаем перечисления - 2004 г. 
+- [How do I decrypt "Enum<E extends Enum<E>>"?](http://www.angelikalanger.com/GenericsFAQ/FAQSections/TypeParameters.html#FAQ106) - Почему перечисление имеет рекурсивное обобщение
+- [Enums - static and instance blocks](https://stackoverflow.com/questions/11419519/enums-static-and-instance-blocks) - Объяснение почему в перечислениях статические блоки выполняются позже кодовых блоков и конструкторов 
+- [Правильный Singleton в Java](https://habr.com/ru/post/129494/) - Различные способы реализации Singleton (в том числе с помощью `enum`) - 2011 г.
+- [Enum Mappings with Hibernate – The Complete Guide](https://thorben-janssen.com/hibernate-enum-mappings/) - Маппинг перечислений в записи в БД с помощью JPA и Hibernate 
 
 [enums]: /docs/enums_collections.md
 [effective-enums]: /docs/effective_enums.md
