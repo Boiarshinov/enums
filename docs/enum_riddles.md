@@ -235,7 +235,7 @@ static {
 }
    
 public static PineIsNotEnum[] values() {
-    return VALUES;
+    return VALUES.clone();
 }
 ```
 
@@ -268,7 +268,7 @@ public class PineIsNotEnum extends Enum<PineIsNotEnum> {
     }
 
     public static PineIsNotEnum[] values() {
-        return VALUES;
+        return VALUES.clone();
     }
 
     public static PineIsNotEnum valueOf(String name) {
