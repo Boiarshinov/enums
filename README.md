@@ -22,7 +22,8 @@
 - [How do I decrypt "Enum<E extends Enum<E>>"?](http://www.angelikalanger.com/GenericsFAQ/FAQSections/TypeParameters.html#FAQ106) - Почему перечисление имеет рекурсивное обобщение
 - [Enums - static and instance blocks](https://stackoverflow.com/questions/11419519/enums-static-and-instance-blocks) - Объяснение почему в перечислениях статические блоки выполняются позже кодовых блоков и конструкторов 
 - [Правильный Singleton в Java](https://habr.com/ru/post/129494/) - Различные способы реализации Singleton (в том числе с помощью `enum`) - 2011 г.
-- [Enum Mappings with Hibernate – The Complete Guide](https://thorben-janssen.com/hibernate-enum-mappings/) - Маппинг перечислений в записи в БД с помощью JPA и Hibernate 
+- [Enum Mappings with Hibernate – The Complete Guide](https://thorben-janssen.com/hibernate-enum-mappings/) - Маппинг перечислений в записи в БД с помощью JPA и Hibernate
+- [Micro optimizations in Java. Good, nice and slow Enum](https://medium.com/javarevisited/micro-optimizations-in-java-good-nice-and-slow-enum-261e6f77bd2e) - Сравнение производительности стандартных методов `Enum` с кастомными реализациями - 2020 г.
 
 [enums]: /docs/enums_collections.md
 [effective-enums]: /docs/effective_enums.md
