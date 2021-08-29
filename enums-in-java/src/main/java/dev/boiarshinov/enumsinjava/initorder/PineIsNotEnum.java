@@ -15,7 +15,7 @@ public class PineIsNotEnum /*extends Enum<PineIsNotEnum>*/ {
 
     static {
         FIR = new PineIsNotEnum("FIR", 0);
-        CEDAR = new PineIsNotEnum("CEDAR", 0);
+        CEDAR = new PineIsNotEnum("CEDAR", 1);
         VALUES = new PineIsNotEnum[] {FIR, CEDAR};
         System.out.println("Static block");
     }

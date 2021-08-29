@@ -1,11 +1,14 @@
 # Загадки Enum'ов
 
-Но у перечислений есть странные особенности, обнаружив которые, хочется спросить: "Почему так?".
+Перечисления появились в пятой версии Java и с тех пор крепко обосновались в наших приложениях.
+Работа с перечислениями почти не отличается от работы с любыми другими классами в Java.
+Но есть несколько особенностей, которые вызывают удивление.
+Каждый раз сталкиваясь с ними, хочется спросить: "Почему так?".
 
 Давайте попробуем разобраться.
 <cut />
 
-## Странность 1. Порядок инициализации
+## Порядок инициализации
 
 В отличие от некоторых других языков программирования в Java перечисления являются полноценными классами.
 Конечно, есть некоторые особенности, например:
@@ -171,13 +174,119 @@ public class PineIsNotEnum extends Enum<PineIsNotEnum> {
 > Инициализация этих полей происходит в статическом блоке до всех остальных статических выражений.
 
 
-## Странность 2. Отсутствующие методы
+## Отсутствующие методы
+
+Все перечисления неявно унаследованы от абстрактного класса `Enum`.
+Если заглянуть в [javadoc](https://docs.oracle.com/javase/7/docs/api/java/lang/Enum.html) на этот класс, то можно увидеть следующие методы:
+```java
+String name() { /* ... */ }
+int ordinal() { /* ... */ }
+Class<E> getDeclaringClass() { /* ... */ }
+int compareTo(E o) { /* ... */ }
+static <T extends Enum<T>> T valueOf(Class<T> enumType, String name) { /* ... */ }
+/* Методы класса Object */
+```
+
+Чего-то не хватает.
+
+Если попробовать в IDE написать любое перечисление, поставить точку и вызвать автодополнение, то он предложит еще два метода:
+```java
+Pine[] values = Pine.values();
+Pine cedar = Pine.valueOf("CEDAR");
+```
+
+В исходниках класса `Enum` таких методов нет, но они как-то появляются в каждом перечислении.
+
+Чтобы разобраться, обратимся к документации.
+[Из нее](https://docs.oracle.com/javase/specs/jls/se11/html/jls-8.html#jls-8.9.3) мы узнаем, что два этих метода объявлены неявно.
+Почему неявно?
+Дело в том, что в отличие от других методов класса `Enum` эти методы не получается реализовать в абстрактном классе.
+Метод `values()` возвращает массив со всеми значениями перечисления, а класс `Enum` о них ничего не знает.
+Метод `valueOf(String)` возвращает конкретное значение перечисления по его названию. Можно было бы в нем вызвать метод `valueOf(Class, String)`:
+```java
+public static E valueOf(String name) {
+    return valueOf(E, name);
+}
+```
+Но ничего не выходит из-за того, что класс `E` невозможно извлечь в статическом контексте.
+
+Почему же нельзя было объявить эти методы абстрактными в `Enum`, чтобы разработчики могли хотя бы ознакомиться с их контрактом в javadoc?
+Это невозможно из-за того, что методы не могут быть одновременно статическими и абстрактными.
+Компилятор не поймет. А методы `valueOf(String)` и `values()` по своей природе статические.
+
+Теперь мы понимаем, что данные методы генерируются компилятором.
+Но какая же у них реализация?
+В JLS она не приведена, и в исходниках JDK ее тоже не найти.
+
+Здесь нам поможет тот же трюк с дизассемблированием.
+В первой части статьи я сознательно не стал транслировать дизассемблированный код в Java-код полностью, чтобы не отвлекать внимание от инициализации.
+Если же пристальнее взглянуть на фрагмент под спойлером, то можно увидеть в дополнение к константам, описывающим значения перечисления, еще одну - `VALUES`.
+Она содержит в себе все значения перечисления в виде массива.
+Массив заполняется сразу после инициализации значений.
+Этот же массив возвращается при вызове метода `values()`:
+```java
+/* ... */    
+private static final PineIsNotEnum[] VALUES;
+
+static {
+    FIR = new PineIsNotEnum("FIR", 0);
+    CEDAR = new PineIsNotEnum("CEDAR", 1);
+    VALUES = new PineIsNotEnum[] {FIR, CEDAR};
+}
+   
+public static PineIsNotEnum[] values() {
+    return VALUES;
+}
+```
+
+Метод `valueOf(String)` реализуется с помощью вызова тезки:
+```java
+public static PineIsNotEnum valueOf(String name) {
+    return Enum.valueOf(PineIsNotEnum.class, name);
+}
+```
+
+Обобщая знания о неявных методах и порядке инициализации, давайте запишем как может быть представлено перечисление `Pine` из начала статьи в виде обычного класса:  
+```java
+public class PineIsNotEnum extends Enum<PineIsNotEnum> {
+
+    public static final PineIsNotEnum FIR;
+    public static final PineIsNotEnum CEDAR;
+    private static final PineIsNotEnum[] VALUES;
+
+    protected PineIsNotEnum(String name, int ordinal) {
+        super(name, ordinal);
+        System.out.println("Code block");
+        System.out.println("Constructor");
+    }
+
+    static {
+        FIR = new PineIsNotEnum("FIR", 0);
+        CEDAR = new PineIsNotEnum("CEDAR", 1);
+        VALUES = new PineIsNotEnum[] {FIR, CEDAR};
+        System.out.println("Static block");
+    }
+
+    public static PineIsNotEnum[] values() {
+        return VALUES;
+    }
+
+    public static PineIsNotEnum valueOf(String name) {
+        return Enum.valueOf(PineIsNotEnum.class, name);
+    }
+}
+```
 
 
-## Рекурсивная типизация
+## Заключение
+
+Странности в перечислениях вызваны архитектурными решениями и ограничениями, выбранными разработчиками Java.
+С помощью дизассемблирования нам удалось узнать, как перечисления инициализируются, и как в них реализованы неявные методы. 
+
+Надеюсь, что теперь, столкнувшись с необычным поведением перечислений, вы сможете мысленно преобразовать перечисление в обычный класс и разобраться. 
 
 
 ## Источники
-- [Java Language Specification](https://docs.oracle.com/javase/specs/jls/se11/html/jls-8.html#jls-8.9)
-- [Статья о порядке инициализации перечислений](https://blogs.oracle.com/javamagazine/java-quiz-enums-initialization) в блоге Oracle
-- [Ответ о порядке инициализации перечислений](https://stackoverflow.com/a/50184535/12684864) на StackOverflow
+- [Java Language Specification](https://docs.oracle.com/javase/specs/jls/se11/html/jls-8.html#jls-8.9);
+- [Статья о порядке инициализации перечислений](https://blogs.oracle.com/javamagazine/java-quiz-enums-initialization) в блоге Oracle;
+- [Ответ о порядке инициализации перечислений](https://stackoverflow.com/a/50184535/12684864) на StackOverflow.
