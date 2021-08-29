@@ -109,6 +109,8 @@ class EnumInit extends Enum<EnumInit> {
 }
 ```
 
+Подробнее можно прочитать в [статье в блоге Oracle](https://blogs.oracle.com/javamagazine/java-quiz-enums-initialization) или на [StackOverflow](https://stackoverflow.com/a/50184535/12684864)
+
 ### Несуществующие методы
 Согласно [спецификации Java](https://docs.oracle.com/javase/specs/jls/se11/html/jls-8.html#jls-8.9.3) эти два метода являются неявно объявленными.
 Их реализация создается на этапе компиляции отдельно для каждого перечисления.
